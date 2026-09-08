@@ -7,6 +7,7 @@ import net.minecraft.world.entity.MobCategory;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.slf4j.Logger;
@@ -26,6 +27,12 @@ public class CreateMotorcycles {
                     .build("motorcycle"));
 
     public CreateMotorcycles(IEventBus modEventBus, ModContainer modContainer) {
+        modEventBus.addListener(this::registerPayloadHandlers);
         ENTITY_TYPES.register(modEventBus);
+    }
+
+    private void registerPayloadHandlers(RegisterPayloadHandlersEvent event) {
+        event.registrar(MODID)
+                .playToServer(MotorcycleInputPayload.TYPE, MotorcycleInputPayload.STREAM_CODEC, MotorcycleInputPayload::handle);
     }
 }

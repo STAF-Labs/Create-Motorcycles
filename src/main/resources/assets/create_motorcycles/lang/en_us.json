@@ -1,4 +1,9 @@
 {
   "entity.create_motorcycles.motorcycle": "Motorcycle",
-  "itemGroup.create_motorcycles": "Create: Motorcycles"
+  "itemGroup.create_motorcycles": "Create: Motorcycles",
+  "key.categories.create_motorcycles": "Create: Motorcycles",
+  "key.create_motorcycles.motorcycle_forward": "Motorcycle Forward",
+  "key.create_motorcycles.motorcycle_backward": "Motorcycle Backward",
+  "key.create_motorcycles.motorcycle_left": "Motorcycle Left",
+  "key.create_motorcycles.motorcycle_right": "Motorcycle Right"
 }
