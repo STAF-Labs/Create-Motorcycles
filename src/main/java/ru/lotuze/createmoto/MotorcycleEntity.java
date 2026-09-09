@@ -54,7 +54,21 @@ public class MotorcycleEntity extends Entity {
     @Override
     public void tick() {
         super.tick();
+
+//        if (!this.level().isClientSide) {
         this.tickMotorcyclePhysics();
+
+        if (this.getControllingPassenger() != null && this.tickCount % 5 == 0) {
+            System.out.println(
+                    (this.level().isClientSide ? "CLIENT" : "SERVER")
+                            + " yaw=" + this.getYRot()
+                            + " left=" + this.leftInput
+                            + " right=" + this.rightInput
+                            + " onGround=" + this.onGround()
+            );
+        }
+//        }
+
         this.applyGravity();
         this.move(MoverType.SELF, this.getDeltaMovement());
     }
@@ -115,17 +129,7 @@ public class MotorcycleEntity extends Entity {
     protected void positionRider(Entity passenger, MoveFunction moveFunction) {
         if (this.hasPassenger(passenger)) {
             Vec3 offset = riderOffset(this.getYRot());
-
-            moveFunction.accept(
-                    passenger,
-                    this.getX() + offset.x,
-                    this.getY() + offset.y,
-                    this.getZ() + offset.z
-            );
-
-            if (passenger instanceof LivingEntity livingEntity) {
-                livingEntity.setYBodyRot(this.getYRot());
-            }
+            moveFunction.accept(passenger, this.getX() + offset.x, this.getY() + offset.y, this.getZ() + offset.z);
         }
     }
 
