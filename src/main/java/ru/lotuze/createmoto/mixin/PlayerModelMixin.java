@@ -1,5 +1,6 @@
 package ru.lotuze.createmoto.mixin;
 
+import net.minecraft.util.Mth;
 import ru.lotuze.createmoto.MotorcycleEntity;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.PlayerModel;
@@ -53,6 +54,10 @@ public abstract class PlayerModelMixin<T extends LivingEntity> extends HumanoidM
         this.body.z = -6.5F;
 
         this.head.xRot *= 0.65F;
+
+        float clampedHeadYaw = Mth.clamp(netHeadYaw, -75.0F, 75.0F);
+        this.head.yRot = createMotorcycles$radians(clampedHeadYaw);
+
         this.head.zRot = 0.0F;
         this.head.x = this.body.x;
         this.head.y = this.body.y - 1.0F;
