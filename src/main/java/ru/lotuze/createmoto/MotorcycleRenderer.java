@@ -59,6 +59,10 @@ public class MotorcycleRenderer extends EntityRenderer<MotorcycleEntity> {
     public void render(MotorcycleEntity entity, float entityYaw, float partialTick, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees(90.0F - entityYaw));
+
+        float visualPitch = entity.getVisualPitch(partialTick);
+        poseStack.mulPose(Axis.ZP.rotationDegrees(-visualPitch));
+
         VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
 
         float steeringAngle = entity.getSteeringAngle(partialTick);
