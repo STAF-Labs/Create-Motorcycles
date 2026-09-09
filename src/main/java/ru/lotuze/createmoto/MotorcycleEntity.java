@@ -27,6 +27,7 @@ public class MotorcycleEntity extends Entity {
     private static final double ROLLING_RESISTANCE = 0.025D;
     private static final double AIR_DRAG = 0.030D;
     private static final double HALF_WHEELBASE = 0.85D;
+    private static final double WHEEL_RADIUS = 5.02406D / 16.0D;
 
     private static final double COLLISION_HALF_WIDTH = 0.42D;
     private static final double COLLISION_HEIGHT = 1.20D;
@@ -40,9 +41,13 @@ public class MotorcycleEntity extends Entity {
     private static final double MAX_REVERSE_SPEED = 0.12D;
     private static final double MIN_TURN_SPEED = 0.06D;
     private static final double REVERSE_THRESHOLD = 0.035D;
+
     private float throttle;
     private float steeringInput;
+    private float steeringAngleOld;
     private float steeringAngle;
+    private float wheelRotationOld;
+    private float wheelRotation;
     private double yawVelocity;
     private boolean forwardInput;
     private boolean backwardInput;
@@ -58,12 +63,33 @@ public class MotorcycleEntity extends Entity {
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
     }
 
+    public float getSteeringAngle(float partialTick) {
+        return Mth.lerp(
+                partialTick,
+                this.steeringAngleOld,
+                this.steeringAngle
+        );
+    }
+
+    public float getWheelRotation(float partialTick) {
+        return Mth.lerp(
+                partialTick,
+                this.wheelRotationOld,
+                this.wheelRotation
+        );
+    }
+
     @Override
     public void tick() {
         super.tick();
+
+        Vec3 positionBeforeMove = this.position();
+
         this.tickMotorcyclePhysics();
         this.applyGravity();
         this.move(MoverType.SELF, this.getDeltaMovement());
+
+        this.updateWheelRotation(positionBeforeMove);
     }
 
     public void setInput(boolean forward, boolean backward, boolean left, boolean right) {
@@ -122,7 +148,17 @@ public class MotorcycleEntity extends Entity {
     protected void positionRider(Entity passenger, MoveFunction moveFunction) {
         if (this.hasPassenger(passenger)) {
             Vec3 offset = riderOffset(this.getYRot());
-            moveFunction.accept(passenger, this.getX() + offset.x, this.getY() + offset.y, this.getZ() + offset.z);
+
+            moveFunction.accept(
+                    passenger,
+                    this.getX() + offset.x,
+                    this.getY() + offset.y,
+                    this.getZ() + offset.z
+            );
+
+            if (passenger instanceof LivingEntity livingEntity) {
+                livingEntity.setYBodyRot(this.getYRot());
+            }
         }
     }
 
@@ -240,8 +276,6 @@ public class MotorcycleEntity extends Entity {
         Vec3 finalMovement = newCenterPosition
                 .subtract(this.position());
 
-//        this.setYRot(newYaw);
-
         finalMovement = clampForwardSpeed(finalMovement, newForward);
 
         if (finalMovement.horizontalDistanceSqr() < 1.0E-5D && Math.abs(this.throttle) < 0.02F) {
@@ -264,8 +298,6 @@ public class MotorcycleEntity extends Entity {
             this.setYRot(newYaw);
         }
 
-        this.setYRot(newYaw);
-
         this.setDeltaMovement(
                 finalMovement.x,
                 velocity.y,
@@ -274,13 +306,18 @@ public class MotorcycleEntity extends Entity {
     }
 
     private void updateSteering() {
+        this.steeringAngleOld = this.steeringAngle;
+
         float targetSteering = 0.0F;
+
         if (this.leftInput) {
             targetSteering -= 1.0F;
         }
+
         if (this.rightInput) {
             targetSteering += 1.0F;
         }
+
         this.steeringInput = Mth.lerp(STEERING_LERP, this.steeringInput, targetSteering);
         this.steeringAngle = this.steeringInput * MAX_STEERING_ANGLE;
     }
@@ -384,6 +421,35 @@ public class MotorcycleEntity extends Entity {
                 .getBlockCollisions(this, box)
                 .iterator()
                 .hasNext();
+    }
+
+    private void updateWheelRotation(Vec3 positionBeforeMove) {
+        this.wheelRotationOld = this.wheelRotation;
+
+        double dx = this.getX() - positionBeforeMove.x;
+        double dz = this.getZ() - positionBeforeMove.z;
+
+        double distance = Math.sqrt(dx * dx + dz * dz);
+
+        if (distance < 1.0E-5D) {
+            return;
+        }
+
+        Vec3 movement = new Vec3(dx, 0.0D, dz);
+        Vec3 forward = forwardVector(this.getYRot());
+
+        double direction = movement.dot(forward) >= 0.0D ? 1.0D : -1.0D;
+
+        float rotationDelta = (float) Math.toDegrees(
+                distance / WHEEL_RADIUS
+        );
+
+        this.wheelRotation += (float) (rotationDelta * direction);
+
+        if (this.wheelRotation > 360.0F || this.wheelRotation < -360.0F) {
+            this.wheelRotation %= 360.0F;
+            this.wheelRotationOld %= 360.0F;
+        }
     }
 
     @Override

@@ -36,6 +36,17 @@ public class MotorcycleRenderer extends EntityRenderer<MotorcycleEntity> {
             new ModuleSpec("rear_wheel", new float[]{31.6F, 5.02406F, 8.60015F}, new float[]{8.0F, 5.02406F, 8.60015F}),
             new ModuleSpec("rear_assembly", new float[]{8.6F, 9.2F, 8.0F}, new float[]{-10.2275F, 5.1175F, 8.0F})
     };
+    private static final float STEERING_PIVOT_X = -11.27F;
+    private static final float STEERING_PIVOT_Y = 14.28875F;
+    private static final float STEERING_PIVOT_Z = 0.0F;
+
+    private static final float FRONT_WHEEL_PIVOT_X = -13.8F;
+    private static final float FRONT_WHEEL_PIVOT_Y = 5.02406F;
+    private static final float FRONT_WHEEL_PIVOT_Z = 0.60015F;
+
+    private static final float REAR_WHEEL_PIVOT_X = 13.8F;
+    private static final float REAR_WHEEL_PIVOT_Y = 5.02406F;
+    private static final float REAR_WHEEL_PIVOT_Z = 0.60015F;
 
     private List<ModelElement> elements;
 
@@ -49,9 +60,14 @@ public class MotorcycleRenderer extends EntityRenderer<MotorcycleEntity> {
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees(90.0F - entityYaw));
         VertexConsumer consumer = buffer.getBuffer(RenderType.entityCutoutNoCull(TEXTURE));
+
+        float steeringAngle = entity.getSteeringAngle(partialTick);
+        float wheelRotation = entity.getWheelRotation(partialTick);
+
         for (ModelElement element : getElements()) {
-            renderElement(element, poseStack, consumer, packedLight);
+            renderElement(element, poseStack, consumer, packedLight, steeringAngle, wheelRotation);
         }
+
         poseStack.popPose();
         super.render(entity, entityYaw, partialTick, poseStack, buffer, packedLight);
     }
@@ -75,8 +91,15 @@ public class MotorcycleRenderer extends EntityRenderer<MotorcycleEntity> {
             Minecraft.getInstance().getResourceManager().getResource(location).ifPresent(resource -> {
                 try (InputStreamReader reader = new InputStreamReader(resource.open(), StandardCharsets.UTF_8)) {
                     JsonObject root = JsonParser.parseReader(reader).getAsJsonObject();
+
                     for (var jsonElement : root.getAsJsonArray("elements")) {
-                        loaded.add(ModelElement.fromJson(jsonElement.getAsJsonObject(), module.offset()));
+                        loaded.add(
+                                ModelElement.fromJson(
+                                        jsonElement.getAsJsonObject(),
+                                        module.offset(),
+                                        module.name()
+                                )
+                        );
                     }
                 } catch (Exception exception) {
                     CreateMotorcycles.LOGGER.warn("Failed to load motorcycle model module {}", location, exception);
@@ -86,17 +109,47 @@ public class MotorcycleRenderer extends EntityRenderer<MotorcycleEntity> {
         return loaded;
     }
 
-    private static void renderElement(ModelElement element, PoseStack poseStack, VertexConsumer consumer, int packedLight) {
+    private static void renderElement(ModelElement element, PoseStack poseStack, VertexConsumer consumer, int packedLight, float steeringAngle, float wheelRotation) {
         poseStack.pushPose();
+
+        if (isSteerable(element)) {
+            float pivotX = toWorld(STEERING_PIVOT_X);
+            float pivotY = toWorld(STEERING_PIVOT_Y);
+            float pivotZ = toWorld(STEERING_PIVOT_Z);
+
+            poseStack.translate(pivotX, pivotY, pivotZ);
+            poseStack.mulPose(Axis.YP.rotationDegrees(-steeringAngle));
+            poseStack.translate(-pivotX, -pivotY, -pivotZ);
+        }
+
+        if ("moto_front_wheel".equals(element.module())) {
+            rotateWheel(
+                    poseStack,
+                    FRONT_WHEEL_PIVOT_X,
+                    FRONT_WHEEL_PIVOT_Y,
+                    FRONT_WHEEL_PIVOT_Z,
+                    wheelRotation
+            );
+        } else if ("rear_wheel".equals((element.module()))) {
+            rotateWheel(
+                    poseStack,
+                    REAR_WHEEL_PIVOT_X,
+                    REAR_WHEEL_PIVOT_Y,
+                    REAR_WHEEL_PIVOT_Z,
+                    wheelRotation
+            );
+        }
+
         if (element.rotation != null) {
             poseStack.translate(toWorld(element.rotation.origin[0]), toWorld(element.rotation.origin[1]), toWorld(element.rotation.origin[2]));
+
             switch (element.rotation.axis) {
                 case "x" -> poseStack.mulPose(Axis.XP.rotationDegrees(element.rotation.angle));
                 case "y" -> poseStack.mulPose(Axis.YP.rotationDegrees(element.rotation.angle));
                 case "z" -> poseStack.mulPose(Axis.ZP.rotationDegrees(element.rotation.angle));
-                default -> {
-                }
+                default -> {}
             }
+
             poseStack.translate(-toWorld(element.rotation.origin[0]), -toWorld(element.rotation.origin[1]), -toWorld(element.rotation.origin[2]));
         }
 
@@ -159,6 +212,15 @@ public class MotorcycleRenderer extends EntityRenderer<MotorcycleEntity> {
                 .setNormal(pose, nx, ny, nz);
     }
 
+    private static boolean isSteerable(ModelElement element) {
+        return switch (element.module()) {
+            case "moto_front_assembly",
+                 "moto_front_wheel",
+                 "moto_front_lamp" -> true;
+            default -> false;
+        };
+    }
+
     private record ModuleSpec(String name, float[] referenceOrigin, float[] moduleOrigin) {
         float[] offset() {
             return new float[]{
@@ -180,18 +242,44 @@ public class MotorcycleRenderer extends EntityRenderer<MotorcycleEntity> {
         }
     }
 
-    private record ModelElement(float[] from, float[] to, ModelRotation rotation, int color) {
-        static ModelElement fromJson(JsonObject object, float[] offset) {
+    private record ModelElement(String module, float[] from, float[] to, ModelRotation rotation, int color) {
+        static ModelElement fromJson(JsonObject object, float[] offset, String module) {
             JsonArray from = object.getAsJsonArray("from");
             JsonArray to = object.getAsJsonArray("to");
             ModelRotation rotation = object.has("rotation") ? ModelRotation.fromJson(object.getAsJsonObject("rotation"), offset) : null;
             int color = object.has("color") ? object.get("color").getAsInt() : 0;
+
             return new ModelElement(
-                    new float[]{from.get(0).getAsFloat() + offset[0], from.get(1).getAsFloat() + offset[1], from.get(2).getAsFloat() + offset[2]},
-                    new float[]{to.get(0).getAsFloat() + offset[0], to.get(1).getAsFloat() + offset[1], to.get(2).getAsFloat() + offset[2]},
+                    module,
+                    new float[]{
+                            from.get(0).getAsFloat() + offset[0],
+                            from.get(1).getAsFloat() + offset[1],
+                            from.get(2).getAsFloat() + offset[2]
+                    },
+                    new float[]{
+                            to.get(0).getAsFloat() + offset[0],
+                            to.get(1).getAsFloat() + offset[1],
+                            to.get(2).getAsFloat() + offset[2]
+                    },
                     rotation,
                     color
             );
         }
+    }
+
+    private static void rotateWheel(
+            PoseStack poseStack,
+            float pivotX,
+            float pivotY,
+            float pivotZ,
+            float rotation
+    ) {
+        float x = toWorld(pivotX);
+        float y = toWorld(pivotY);
+        float z = toWorld(pivotZ);
+
+        poseStack.translate(x, y, z);
+        poseStack.mulPose(Axis.ZP.rotationDegrees(rotation));
+        poseStack.translate(-x, -y, -z);
     }
 }
