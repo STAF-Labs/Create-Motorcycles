@@ -11,6 +11,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 
 public class MotorcycleEntity extends Entity {
@@ -23,11 +24,17 @@ public class MotorcycleEntity extends Entity {
     private static final double ENGINE_FORCE = 0.025D;
     private static final double REVERSE_FORCE = 0.010D;
     private static final double BRAKE_FORCE = 0.055D;
-    private static final double FRONT_GRIP = 0.28D;
-    private static final double REAR_GRIP = 0.72D;
     private static final double ROLLING_RESISTANCE = 0.025D;
     private static final double AIR_DRAG = 0.030D;
     private static final double HALF_WHEELBASE = 0.85D;
+
+    private static final double COLLISION_HALF_WIDTH = 0.42D;
+    private static final double COLLISION_HEIGHT = 1.20D;
+    private static final double FRONT_COLLISION_OFFSET = 0.78D;
+    private static final double REAR_COLLISION_OFFSET = 0.78D;
+    private static final double COLLISION_HALF_LENGTH = 0.42D;
+    private static final double COLLISION_EPSILON = 1.0E-4D;
+
     private static final double YAW_LERP = 0.20D;
     private static final double MAX_FORWARD_SPEED = 0.42D;
     private static final double MAX_REVERSE_SPEED = 0.12D;
@@ -222,7 +229,8 @@ public class MotorcycleEntity extends Entity {
                 desiredYawVelocity
         );
 
-        float newYaw = this.getYRot() + (float) Math.toDegrees(this.yawVelocity);
+        float oldYaw = this.getYRot();
+        float newYaw = oldYaw + (float) Math.toDegrees(this.yawVelocity);
 
         Vec3 newForward = forwardVector(newYaw);
 
@@ -232,14 +240,31 @@ public class MotorcycleEntity extends Entity {
         Vec3 finalMovement = newCenterPosition
                 .subtract(this.position());
 
-        this.setYRot(newYaw);
+//        this.setYRot(newYaw);
 
         finalMovement = clampForwardSpeed(finalMovement, newForward);
 
-        if (finalMovement.horizontalDistanceSqr() < 1.0E-5D
-                && Math.abs(this.throttle) < 0.02F) {
+        if (finalMovement.horizontalDistanceSqr() < 1.0E-5D && Math.abs(this.throttle) < 0.02F) {
             finalMovement = Vec3.ZERO;
         }
+
+        boolean collised = false;
+
+        if (finalMovement.horizontalDistanceSqr() > COLLISION_EPSILON) {
+            Vec3 targetPosition = this.position().add(finalMovement);
+            collised = hasMotorcycleCollision(targetPosition, newYaw);
+        }
+
+        if (collised) {
+            finalMovement = Vec3.ZERO;
+            this.yawVelocity = 0.0D;
+
+            this.setYRot(oldYaw);
+        } else {
+            this.setYRot(newYaw);
+        }
+
+        this.setYRot(newYaw);
 
         this.setDeltaMovement(
                 finalMovement.x,
@@ -307,6 +332,58 @@ public class MotorcycleEntity extends Entity {
     private static Vec3 forwardVector(float yawDegrees) {
         double yaw = Math.toRadians(yawDegrees);
         return new Vec3(-Math.sin(yaw), 0.0D, Math.cos(yaw));
+    }
+
+    private AABB createCollisionBox(Vec3 center) {
+        return new AABB(
+                center.x - COLLISION_HALF_WIDTH,
+                center.y,
+                center.z - COLLISION_HALF_WIDTH,
+                center.x + COLLISION_HALF_WIDTH,
+                center.y + COLLISION_HEIGHT,
+                center.z + COLLISION_HALF_WIDTH
+        );
+    }
+
+    private AABB[] getCollisionBoxes(Vec3 position, float yaw) {
+        Vec3 forward = forwardVector(yaw);
+
+        Vec3 frontCenter = position.add(
+                forward.scale(FRONT_COLLISION_OFFSET)
+        );
+
+        Vec3 rearCenter = position.subtract(
+                forward.scale(REAR_COLLISION_OFFSET)
+        );
+
+        return new AABB[]{
+            createCollisionBox(frontCenter),
+            createCollisionBox(position),
+            createCollisionBox(rearCenter)
+        };
+    }
+
+    private boolean hasMotorcycleCollision(Vec3 position, float yaw) {
+        Vec3 forward = forwardVector(yaw);
+
+        Vec3 frontCenter = position.add(
+                forward.scale(FRONT_COLLISION_OFFSET)
+        );
+
+        Vec3 rearCenter = position.subtract(
+                forward.scale(REAR_COLLISION_OFFSET)
+        );
+
+        return hasBlockCollision(createCollisionBox(frontCenter))
+                || hasBlockCollision(createCollisionBox(position))
+                || hasBlockCollision(createCollisionBox(rearCenter));
+    }
+
+    private boolean hasBlockCollision(AABB box) {
+        return this.level()
+                .getBlockCollisions(this, box)
+                .iterator()
+                .hasNext();
     }
 
     @Override

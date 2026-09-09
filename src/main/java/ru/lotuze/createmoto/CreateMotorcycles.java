@@ -19,12 +19,14 @@ public class CreateMotorcycles {
 
     public static final DeferredRegister<EntityType<?>> ENTITY_TYPES = DeferredRegister.create(Registries.ENTITY_TYPE, MODID);
 
-    public static final DeferredHolder<EntityType<?>, EntityType<MotorcycleEntity>> MOTORCYCLE = ENTITY_TYPES.register("motorcycle",
-            () -> EntityType.Builder.<MotorcycleEntity>of(MotorcycleEntity::new, MobCategory.MISC)
-                    .sized(2.6F, 1.35F)
-                    .clientTrackingRange(10)
-                    .updateInterval(3)
-                    .build("motorcycle"));
+    public static final DeferredHolder<EntityType<?>, EntityType<MotorcycleEntity>> MOTORCYCLE =
+            ENTITY_TYPES.register(
+                    "motorcycle",
+                    () -> EntityType.Builder.<MotorcycleEntity>of(MotorcycleEntity::new, MobCategory.MISC)
+                        .sized(0.85F, 1.25F)
+                        .clientTrackingRange(10)
+                        .updateInterval(3)
+                        .build("motorcycle"));
 
     public CreateMotorcycles(IEventBus modEventBus, ModContainer modContainer) {
         modEventBus.addListener(this::registerPayloadHandlers);
