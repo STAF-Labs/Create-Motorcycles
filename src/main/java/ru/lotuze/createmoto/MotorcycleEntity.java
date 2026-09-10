@@ -99,13 +99,12 @@ public class MotorcycleEntity extends Entity {
     public void tick() {
         super.tick();
 
-        Vec3 positionBeforeMove = this.position();
         if (this.level().isClientSide) {
             this.tickClientVisualState();
             return;
         }
 
-        this.tickServerPhysics(positionBeforeMove);
+        this.tickServerPhysics();
     }
 
     private void tickClientVisualState() {
@@ -119,7 +118,7 @@ public class MotorcycleEntity extends Entity {
         this.previousVisualPosition = this.position();
     }
 
-    private void tickServerPhysics(Vec3 positionBeforeMove) {
+    private void tickServerPhysics() {
         this.steppingThisTick = false;
         this.tickMotorcyclePhysics();
 
@@ -140,7 +139,6 @@ public class MotorcycleEntity extends Entity {
             this.setDeltaMovement(movement.x, 0.0D, movement.z);
         }
 
-        this.updateWheelRotation(positionBeforeMove);
     }
 
     @Override
@@ -175,7 +173,7 @@ public class MotorcycleEntity extends Entity {
     }
 
     public void setInput(MotorcycleInput input) {
-        this.input = input;
+        this.input = input == null ? MotorcycleInput.NONE : input;
     }
 
     private void clearInput() {
@@ -471,11 +469,11 @@ public class MotorcycleEntity extends Entity {
         return new Vec3(-Math.sin(yaw), 0.0D, Math.cos(yaw));
     }
 
-    private void updateWheelRotation(Vec3 positionBeforeMove) {
+    private void updateWheelRotation(Vec3 previousPosition) {
         this.wheelRotationOld = this.wheelRotation;
 
-        double dx = this.getX() - positionBeforeMove.x;
-        double dz = this.getZ() - positionBeforeMove.z;
+        double dx = this.getX() - previousPosition.x;
+        double dz = this.getZ() - previousPosition.z;
 
         double distance = Math.sqrt(dx * dx + dz * dz);
 

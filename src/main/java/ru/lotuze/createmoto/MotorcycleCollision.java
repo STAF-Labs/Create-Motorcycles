@@ -6,7 +6,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
-public final class MotorcycleCollision {
+final class MotorcycleCollision {
     private static final double COLLISION_HALF_WIDTH = 0.42D;
     private static final double COLLISION_HEIGHT = 1.20D;
     private static final double FRONT_COLLISION_OFFSET = 0.78D;
@@ -24,11 +24,11 @@ public final class MotorcycleCollision {
     private MotorcycleCollision() {
     }
 
-    public static double collisionEpsilon() {
+    static double collisionEpsilon() {
         return COLLISION_EPSILON;
     }
 
-    public static CollisionResult resolve(Entity entity, Vec3 desiredMovement, float yaw) {
+    static CollisionResult resolve(Entity entity, Vec3 desiredMovement, float yaw) {
         if (desiredMovement.horizontalDistanceSqr() <= COLLISION_EPSILON) {
             return new CollisionResult(desiredMovement, false);
         }
@@ -67,7 +67,7 @@ public final class MotorcycleCollision {
         return new CollisionResult(Vec3.ZERO, false);
     }
 
-    public static float calculateTerrainPitch(Entity entity, Vec3 position, float yaw, double halfWheelbase, float maxPitch) {
+    static float calculateTerrainPitch(Entity entity, Vec3 position, float yaw, double halfWheelbase, float maxPitch) {
         Vec3 forward = forwardVector(yaw);
         Vec3 frontProbe = position.add(forward.scale(halfWheelbase));
         Vec3 rearProbe = position.subtract(forward.scale(halfWheelbase));
@@ -183,6 +183,6 @@ public final class MotorcycleCollision {
         return new Vec3(-Math.sin(yaw), 0.0D, Math.cos(yaw));
     }
 
-    public record CollisionResult(Vec3 movement, boolean stepped) {
+    record CollisionResult(Vec3 movement, boolean stepped) {
     }
 }

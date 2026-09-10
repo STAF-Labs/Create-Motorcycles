@@ -32,10 +32,14 @@ public record MotorcycleInputPayload(boolean forward, boolean backward, boolean 
             if (vehicle instanceof MotorcycleEntity motorcycle) {
                 LivingEntity controllingPassenger = motorcycle.getControllingPassenger();
                 if (controllingPassenger == context.player()) {
-                    motorcycle.setInput(new MotorcycleInput(payload.forward, payload.backward, payload.left, payload.right));
+                    motorcycle.setInput(payload.toInput());
                 }
             }
         });
+    }
+
+    private MotorcycleInput toInput() {
+        return new MotorcycleInput(this.forward, this.backward, this.left, this.right);
     }
 
     @Override

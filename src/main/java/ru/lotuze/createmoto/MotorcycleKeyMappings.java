@@ -48,8 +48,15 @@ public final class MotorcycleKeyMappings {
 
     public static void onClientTick(ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null) {
+            lastForward = false;
+            lastBackward = false;
+            lastLeft = false;
+            lastRight = false;
+            return;
+        }
 
-        boolean ridingMotorcycle = minecraft.player != null && minecraft.player.getVehicle() instanceof MotorcycleEntity;
+        boolean ridingMotorcycle = minecraft.player.getVehicle() instanceof MotorcycleEntity;
         boolean forward = ridingMotorcycle && FORWARD.isDown();
         boolean backward = ridingMotorcycle && BACKWARD.isDown();
         boolean left = ridingMotorcycle && LEFT.isDown();
