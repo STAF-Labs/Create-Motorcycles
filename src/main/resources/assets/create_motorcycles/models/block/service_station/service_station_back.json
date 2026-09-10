@@ -1,0 +1,248 @@
+{
+	"format_version": "1.9.0",
+	"credit": "Create: Motorcycles — Service Station BACK multiblock model",
+	"textures": {
+		"metal": "minecraft:block/iron_block",
+		"dark_metal": "minecraft:block/polished_deepslate",
+		"deck": "minecraft:block/smooth_stone",
+		"brass": "minecraft:block/gold_block",
+		"particle": "minecraft:block/iron_block"
+	},
+	"elements": [
+		{
+			"name": "Back_Base_Left_Rail",
+			"from": [0, 0, 1],
+			"to": [15, 2, 4],
+			"color": 8,
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#metal"},
+				"east": {"uv": [0, 0, 16, 16], "texture": "#metal"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#metal"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#metal"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#metal"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#metal"}
+			}
+		},
+		{
+			"name": "Back_Base_Right_Rail",
+			"from": [0, 0, 12],
+			"to": [15, 2, 15],
+			"color": 8,
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#dark_metal"},
+				"east": {"uv": [0, 0, 16, 16], "texture": "#dark_metal"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#dark_metal"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#dark_metal"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#dark_metal"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#dark_metal"}
+			}
+		},
+		{
+			"name": "Back_Crossbar_Back",
+			"from": [0, 0, 4],
+			"to": [2, 2, 12],
+			"color": 8,
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#deck"},
+				"east": {"uv": [0, 0, 16, 16], "texture": "#deck"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#deck"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#deck"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#deck"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#deck"}
+			}
+		},
+		{
+			"name": "Back_Crossbar_Front",
+			"from": [14, 0, 4],
+			"to": [15, 2, 12],
+			"color": 8,
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#brass"},
+				"east": {"uv": [0, 0, 16, 16], "texture": "#brass"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#brass"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#brass"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#brass"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#brass"}
+			}
+		},
+		{
+			"name": "Back_Deck_Left",
+			"from": [0, 2, 4],
+			"to": [15, 3, 6],
+			"color": 3,
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"east": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#particle"}
+			}
+		},
+		{
+			"name": "Back_Deck_Right",
+			"from": [0, 2, 10],
+			"to": [15, 3, 12],
+			"color": 3,
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"east": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#particle"}
+			}
+		},
+		{
+			"name": "Back_Deck_Center",
+			"from": [2, 2, 7],
+			"to": [13, 3, 9],
+			"color": 4,
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"east": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#particle"}
+			}
+		},
+		{
+			"name": "Rear_Stop_Base",
+			"from": [8, 2, 4.5],
+			"to": [14, 3.5, 11.5],
+			"color": 4,
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"east": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#particle"}
+			}
+		},
+		{
+			"name": "Rear_Stop_Left",
+			"from": [8.5, 3.5, 4.6],
+			"to": [12.5, 7, 6],
+			"rotation": {"angle": 22.5, "axis": "z", "origin": [10.5, 4, 5.25], "rescale": true},
+			"color": 1,
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"east": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#particle"}
+			}
+		},
+		{
+			"name": "Rear_Stop_Right",
+			"from": [8.5, 3.5, 9.9],
+			"to": [12.5, 7, 11.3],
+			"rotation": {"angle": 22.5, "axis": "z", "origin": [10.5, 4, 10.75], "rescale": true},
+			"color": 1,
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"east": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#particle"}
+			}
+		},
+		{
+			"name": "Control_Post",
+			"from": [2, 2, 12.5],
+			"to": [4, 8, 15],
+			"color": 8,
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"east": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#particle"}
+			}
+		},
+		{
+			"name": "Control_Box",
+			"from": [1, 7, 11.5],
+			"to": [5, 11, 15.5],
+			"color": 4,
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"east": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#particle"}
+			}
+		},
+		{
+			"name": "Back_Brass_Left",
+			"from": [14, 0, 0],
+			"to": [16, 3, 2],
+			"color": 1,
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"east": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#particle"}
+			}
+		},
+		{
+			"name": "Back_Brass_Right",
+			"from": [14, 0, 14],
+			"to": [16, 3, 16],
+			"color": 1,
+			"faces": {
+				"north": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"east": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"south": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"west": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"up": {"uv": [0, 0, 16, 16], "texture": "#particle"},
+				"down": {"uv": [0, 0, 16, 16], "texture": "#particle"}
+			}
+		}
+	],
+	"groups": [
+		{
+			"name": "Base",
+			"origin": [8, 8, 8],
+			"scope": 0,
+			"color": 0,
+			"children": [0, 1, 2, 3]
+		},
+		{
+			"name": "Deck",
+			"origin": [8, 8, 8],
+			"scope": 0,
+			"color": 0,
+			"children": [4, 5, 6]
+		},
+		{
+			"name": "Rear_Wheel_Stop",
+			"origin": [8, 8, 8],
+			"scope": 0,
+			"color": 0,
+			"children": [7, 8, 9]
+		},
+		{
+			"name": "Control",
+			"origin": [8, 8, 8],
+			"scope": 0,
+			"color": 0,
+			"children": [10, 11]
+		},
+		{
+			"name": "Details",
+			"origin": [8, 8, 8],
+			"scope": 0,
+			"color": 0,
+			"children": [12, 13]
+		}
+	]
+}

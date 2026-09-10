@@ -5,5 +5,9 @@
   "key.create_motorcycles.motorcycle_forward": "Motorcycle Forward",
   "key.create_motorcycles.motorcycle_backward": "Motorcycle Backward",
   "key.create_motorcycles.motorcycle_left": "Motorcycle Left",
-  "key.create_motorcycles.motorcycle_right": "Motorcycle Right"
+  "key.create_motorcycles.motorcycle_right": "Motorcycle Right",
+
+  "block.create_motorcycles.service_station": "Service station",
+
+  "message.create_motorcycles.service_station.no_space": "Not enough space to place the Service Station"
 }

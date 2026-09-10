@@ -1,0 +1,51 @@
+{
+  "variants": {
+    "part=master,facing=north": {
+      "model": "create_motorcycles:block/service_station/service_station_master",
+      "y": 90
+    },
+    "part=master,facing=east": {
+      "model": "create_motorcycles:block/service_station/service_station_master",
+      "y": 180
+    },
+    "part=master,facing=south": {
+      "model": "create_motorcycles:block/service_station/service_station_master",
+      "y": 270
+    },
+    "part=master,facing=west": {
+      "model": "create_motorcycles:block/service_station/service_station_master"
+    },
+
+    "part=front,facing=north": {
+      "model": "create_motorcycles:block/service_station/service_station_front",
+      "y": 90
+    },
+    "part=front,facing=east": {
+      "model": "create_motorcycles:block/service_station/service_station_front",
+      "y": 180
+    },
+    "part=front,facing=south": {
+      "model": "create_motorcycles:block/service_station/service_station_front",
+      "y": 270
+    },
+    "part=front,facing=west": {
+      "model": "create_motorcycles:block/service_station/service_station_front"
+    },
+
+    "part=back,facing=north": {
+      "model": "create_motorcycles:block/service_station/service_station_back",
+      "y": 90
+    },
+    "part=back,facing=east": {
+      "model": "create_motorcycles:block/service_station/service_station_back",
+      "y": 180
+    },
+    "part=back,facing=south": {
+      "model": "create_motorcycles:block/service_station/service_station_back",
+      "y": 270
+    },
+    "part=back,facing=west": {
+      "model": "create_motorcycles:block/service_station/service_station_back"
+    }
+  }
+}

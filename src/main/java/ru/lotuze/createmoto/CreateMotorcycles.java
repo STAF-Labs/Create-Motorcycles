@@ -13,9 +13,13 @@ import net.neoforged.neoforge.registries.DeferredRegister;
 import org.slf4j.Logger;
 import ru.lotuze.createmoto.motorcycle.MotorcycleEntity;
 import ru.lotuze.createmoto.motorcycle.MotorcycleInputPayload;
+import ru.lotuze.createmoto.registry.ModBlockEntities;
+import ru.lotuze.createmoto.registry.ModBlocks;
+import ru.lotuze.createmoto.registry.ModItems;
 
 @Mod(CreateMotorcycles.MODID)
 public class CreateMotorcycles {
+
     public static final String MODID = "create_motorcycles";
     public static final Logger LOGGER = LogUtils.getLogger();
 
@@ -32,7 +36,12 @@ public class CreateMotorcycles {
 
     public CreateMotorcycles(IEventBus modEventBus, ModContainer modContainer) {
         modEventBus.addListener(this::registerPayloadHandlers);
+
         ENTITY_TYPES.register(modEventBus);
+
+        ModBlocks.BLOCKS.register(modEventBus);
+        ModItems.ITEMS.register(modEventBus);
+        ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
     }
 
     private void registerPayloadHandlers(RegisterPayloadHandlersEvent event) {

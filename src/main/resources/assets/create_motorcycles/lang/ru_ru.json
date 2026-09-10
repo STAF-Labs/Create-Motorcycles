@@ -5,5 +5,9 @@
   "key.create_motorcycles.motorcycle_forward": "Мотоцикл: вперёд",
   "key.create_motorcycles.motorcycle_backward": "Мотоцикл: назад",
   "key.create_motorcycles.motorcycle_left": "Мотоцикл: влево",
-  "key.create_motorcycles.motorcycle_right": "Мотоцикл: вправо"
+  "key.create_motorcycles.motorcycle_right": "Мотоцикл: вправо",
+
+  "block.create_motorcycles.service_station": "Сервисная станция",
+
+  "message.create_motorcycles.service_station.no_space": "Недостаточно места для установки сервисной станции"
 }
