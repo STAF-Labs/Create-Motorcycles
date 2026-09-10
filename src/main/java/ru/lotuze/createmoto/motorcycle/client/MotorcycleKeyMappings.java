@@ -1,4 +1,4 @@
-package ru.lotuze.createmoto;
+package ru.lotuze.createmoto.motorcycle.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
@@ -7,6 +7,8 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
+import ru.lotuze.createmoto.motorcycle.MotorcycleEntity;
+import ru.lotuze.createmoto.motorcycle.MotorcycleInputPayload;
 
 public final class MotorcycleKeyMappings {
     private static final String CATEGORY = "key.categories.create_motorcycles";

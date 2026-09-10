@@ -1,4 +1,4 @@
-package ru.lotuze.createmoto;
+package ru.lotuze.createmoto.motorcycle;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;

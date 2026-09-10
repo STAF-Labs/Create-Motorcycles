@@ -11,6 +11,8 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.slf4j.Logger;
+import ru.lotuze.createmoto.motorcycle.MotorcycleEntity;
+import ru.lotuze.createmoto.motorcycle.MotorcycleInputPayload;
 
 @Mod(CreateMotorcycles.MODID)
 public class CreateMotorcycles {

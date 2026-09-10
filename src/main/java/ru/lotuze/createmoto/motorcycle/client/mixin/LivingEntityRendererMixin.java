@@ -1,4 +1,4 @@
-package ru.lotuze.createmoto.mixin;
+package ru.lotuze.createmoto.motorcycle.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import ru.lotuze.createmoto.MotorcycleEntity;
+import ru.lotuze.createmoto.motorcycle.MotorcycleEntity;
 
 @Mixin(LivingEntityRenderer.class)
 public abstract class LivingEntityRendererMixin {

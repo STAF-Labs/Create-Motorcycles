@@ -1,4 +1,4 @@
-package ru.lotuze.createmoto;
+package ru.lotuze.createmoto.motorcycle.client;
 
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -14,6 +14,8 @@ import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import org.joml.Matrix4f;
+import ru.lotuze.createmoto.CreateMotorcycles;
+import ru.lotuze.createmoto.motorcycle.MotorcycleEntity;
 
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;

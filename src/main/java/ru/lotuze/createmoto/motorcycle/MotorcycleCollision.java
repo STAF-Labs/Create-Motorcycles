@@ -1,4 +1,4 @@
-package ru.lotuze.createmoto;
+package ru.lotuze.createmoto.motorcycle;
 
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;

@@ -9,6 +9,8 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.NeoForge;
+import ru.lotuze.createmoto.motorcycle.client.MotorcycleKeyMappings;
+import ru.lotuze.createmoto.motorcycle.client.MotorcycleRenderer;
 
 // This class will not load on dedicated servers. Accessing client side code from here is safe.
 @Mod(value = CreateMotorcycles.MODID, dist = Dist.CLIENT)
