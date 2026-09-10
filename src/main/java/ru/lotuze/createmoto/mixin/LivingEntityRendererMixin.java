@@ -23,7 +23,7 @@ public abstract class LivingEntityRendererMixin {
             CallbackInfo callbackInfo
     ) {
         if (entity.getVehicle() instanceof MotorcycleEntity motorcycle) {
-            poseStack.mulPose(Axis.ZP.rotationDegrees(-motorcycle.getVisualPitch(partialTick)));
+            poseStack.mulPose(Axis.ZP.rotationDegrees(motorcycle.getVisualPitch(partialTick)));
         }
     }
 }
