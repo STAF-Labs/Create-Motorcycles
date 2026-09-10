@@ -219,7 +219,8 @@ public class MotorcycleEntity extends Entity {
     @Override
     protected void positionRider(Entity passenger, MoveFunction moveFunction) {
         if (this.hasPassenger(passenger)) {
-            Vec3 offset = riderOffset(this.getYRot());
+            float pitch = this.level().isClientSide ? this.getVisualPitch(1.0F) : 0.0F;
+            Vec3 offset = riderOffset(this.getYRot(), pitch);
 
             moveFunction.accept(
                     passenger,
@@ -240,13 +241,19 @@ public class MotorcycleEntity extends Entity {
         return this.position().add(offset.x, 0.1D, offset.z);
     }
 
-    private static Vec3 riderOffset(float yawDegrees) {
+    private static Vec3 riderOffset(float yawDegrees, float pitchDegrees) {
         double yaw = Math.toRadians(yawDegrees);
+        double pitch = Math.toRadians(pitchDegrees);
         Vec3 forward = new Vec3(-Math.sin(yaw), 0.0D, Math.cos(yaw));
         Vec3 right = new Vec3(Math.cos(yaw), 0.0D, Math.sin(yaw));
-        return forward.scale(RIDER_FORWARD_OFFSET)
+        Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
+
+        double pitchedForward = RIDER_FORWARD_OFFSET * Math.cos(pitch) - RIDER_UP_OFFSET * Math.sin(pitch);
+        double pitchedUp = RIDER_FORWARD_OFFSET * Math.sin(pitch) + RIDER_UP_OFFSET * Math.cos(pitch);
+
+        return forward.scale(pitchedForward)
                 .add(right.scale(RIDER_RIGHT_OFFSET))
-                .add(0.0D, RIDER_UP_OFFSET, 0.0D);
+                .add(up.scale(pitchedUp));
     }
 
     private static Vec3 rotateOffset(Vec3 localOffset, float yawDegrees) {
