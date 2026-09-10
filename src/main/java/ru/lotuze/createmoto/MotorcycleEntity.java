@@ -1,6 +1,8 @@
 package ru.lotuze.createmoto;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -16,6 +18,8 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class MotorcycleEntity extends Entity {
+    private static final EntityDataAccessor<Float> DATA_STEERING_ANGLE = SynchedEntityData.defineId(MotorcycleEntity.class, EntityDataSerializers.FLOAT);
+
     private static final double RIDER_FORWARD_OFFSET = -0.52D;
     private static final double RIDER_RIGHT_OFFSET = 0.0D;
     private static final double RIDER_UP_OFFSET = 0.12D;
@@ -60,13 +64,11 @@ public class MotorcycleEntity extends Entity {
     private float wheelRotationOld;
     private float wheelRotation;
     private double yawVelocity;
-    private boolean forwardInput;
-    private boolean backwardInput;
-    private boolean leftInput;
-    private boolean rightInput;
+    private MotorcycleInput input = MotorcycleInput.NONE;
     private boolean steppingThisTick;
     private float visualPitchOld;
     private float visualPitch;
+    private Vec3 previousVisualPosition;
 
     public MotorcycleEntity(EntityType<? extends MotorcycleEntity> entityType, Level level) {
         super(entityType, level);
@@ -74,6 +76,7 @@ public class MotorcycleEntity extends Entity {
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_STEERING_ANGLE, 0.0F);
     }
 
     public float getSteeringAngle(float partialTick) {
@@ -105,48 +108,54 @@ public class MotorcycleEntity extends Entity {
         super.tick();
 
         Vec3 positionBeforeMove = this.position();
+        if (this.level().isClientSide) {
+            this.tickClientVisualState();
+            return;
+        }
 
+        this.tickServerPhysics(positionBeforeMove);
+    }
+
+    private void tickClientVisualState() {
+        this.steeringAngleOld = this.steeringAngle;
+        this.steeringAngle = this.entityData.get(DATA_STEERING_ANGLE);
+        this.updateVisualPitch();
+        if (this.previousVisualPosition != null) {
+            this.updateWheelRotation(this.previousVisualPosition);
+        }
+        this.previousVisualPosition = this.position();
+    }
+
+    private void tickServerPhysics(Vec3 positionBeforeMove) {
         this.steppingThisTick = false;
-
         this.tickMotorcyclePhysics();
 
         if (!this.steppingThisTick) {
             Vec3 movement = this.getDeltaMovement();
-
-            this.setDeltaMovement(
-                    movement.x,
-                    movement.y - GRAVITY,
-                    movement.z
-            );
+            this.setDeltaMovement(movement.x, movement.y - GRAVITY, movement.z);
         }
 
         this.move(MoverType.SELF, this.getDeltaMovement());
 
         if (this.onGround() && this.getDeltaMovement().y < 0.0D) {
             Vec3 movement = this.getDeltaMovement();
-
             this.setDeltaMovement(movement.x, 0.0D, movement.z);
         }
 
         if (this.steppingThisTick) {
             Vec3 movement = this.getDeltaMovement();
-
-            this.setDeltaMovement(
-                    movement.x,
-                    0.0D,
-                    movement.z
-            );
+            this.setDeltaMovement(movement.x, 0.0D, movement.z);
         }
 
-        this.updateVisualPitch();
         this.updateWheelRotation(positionBeforeMove);
     }
 
-    public void setInput(boolean forward, boolean backward, boolean left, boolean right) {
-        this.forwardInput = forward;
-        this.backwardInput = backward;
-        this.leftInput = left;
-        this.rightInput = right;
+    public void setInput(MotorcycleInput input) {
+        this.input = input;
+    }
+
+    private void clearInput() {
+        this.input = MotorcycleInput.NONE;
     }
 
     @Override
@@ -174,10 +183,6 @@ public class MotorcycleEntity extends Entity {
         return InteractionResult.sidedSuccess(this.level().isClientSide);
     }
 
-    private String debugSide() {
-        return this.level().isClientSide ? "CLIENT" : "SERVER";
-    }
-
     @Override
     public boolean isPickable() {
         return !this.isRemoved();
@@ -189,9 +194,26 @@ public class MotorcycleEntity extends Entity {
     }
 
     @Override
+    public boolean isControlledByLocalInstance() {
+        return !this.level().isClientSide;
+    }
+
+    @Override
     public LivingEntity getControllingPassenger() {
         Entity passenger = this.getFirstPassenger();
         return passenger instanceof LivingEntity livingEntity ? livingEntity : null;
+    }
+
+    @Override
+    protected void removePassenger(Entity passenger) {
+        super.removePassenger(passenger);
+        this.clearInput();
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        this.clearInput();
+        super.remove(reason);
     }
 
     @Override
@@ -238,10 +260,7 @@ public class MotorcycleEntity extends Entity {
 
     private void tickMotorcyclePhysics() {
         if (this.getControllingPassenger() == null) {
-            this.forwardInput = false;
-            this.backwardInput = false;
-            this.leftInput = false;
-            this.rightInput = false;
+            this.clearInput();
         }
 
         this.updateSteering();
@@ -256,9 +275,9 @@ public class MotorcycleEntity extends Entity {
         float targetThrottle = 0.0F;
         boolean braking = false;
 
-        if (this.forwardInput && !this.backwardInput) {
+        if (this.input.forward() && !this.input.backward()) {
             targetThrottle = 1.0F;
-        } else if (this.backwardInput && !this.forwardInput) {
+        } else if (this.input.backward() && !this.input.forward()) {
             if (rearForwardSpeed > REVERSE_THRESHOLD) {
                 braking = true;
             } else {
@@ -381,39 +400,23 @@ public class MotorcycleEntity extends Entity {
 
         float targetSteering = 0.0F;
 
-        if (this.leftInput) {
+        if (this.input.left()) {
             targetSteering -= 1.0F;
         }
 
-        if (this.rightInput) {
+        if (this.input.right()) {
             targetSteering += 1.0F;
         }
 
         this.steeringInput = Mth.lerp(STEERING_LERP, this.steeringInput, targetSteering);
         this.steeringAngle = this.steeringInput * MAX_STEERING_ANGLE;
+        this.entityData.set(DATA_STEERING_ANGLE, this.steeringAngle);
     }
 
     private float getEffectiveSteeringAngle(double speed) {
         double normalizedSpeed = Mth.clamp(speed / MAX_FORWARD_SPEED, 0.0D, 1.0D);
         float steeringScale = (float) Mth.lerp(normalizedSpeed, 1.0D, 0.30D);
         return this.steeringAngle * steeringScale;
-    }
-
-    private void updateYawFromBicycleModel(double forwardSpeed, float effectiveSteering) {
-        if (Math.abs(forwardSpeed) < MIN_TURN_SPEED) {
-            this.yawVelocity = 0.0D;
-            return;
-        }
-
-        double wheelbase = HALF_WHEELBASE * 2.0D;
-
-        double steeringRadians = Math.toRadians(effectiveSteering);
-
-        double beta = Math.atan(0.5D * Math.tan(steeringRadians));
-
-        double desiredYawVelocity = forwardSpeed / wheelbase * Math.cos(beta) * Math.tan(steeringRadians);
-        this.yawVelocity = Mth.lerp(YAW_LERP, this.yawVelocity, desiredYawVelocity);
-        this.setYRot(this.getYRot() + (float) Math.toDegrees(this.yawVelocity));
     }
 
     private static Vec3 clampForwardSpeed(Vec3 movement, Vec3 forward) {
@@ -425,10 +428,6 @@ public class MotorcycleEntity extends Entity {
             return movement.add(forward.scale(-MAX_REVERSE_SPEED - forwardSpeed));
         }
         return movement;
-    }
-
-    private static Vec3 rightVector(Vec3 forward) {
-        return new Vec3(forward.z, 0.0D, -forward.x);
     }
 
     private static Vec3 rotateY(Vec3 vector, double angleRadians) {
@@ -451,24 +450,6 @@ public class MotorcycleEntity extends Entity {
                 center.y + COLLISION_HEIGHT,
                 center.z + COLLISION_HALF_WIDTH
         );
-    }
-
-    private AABB[] getCollisionBoxes(Vec3 position, float yaw) {
-        Vec3 forward = forwardVector(yaw);
-
-        Vec3 frontCenter = position.add(
-                forward.scale(FRONT_COLLISION_OFFSET)
-        );
-
-        Vec3 rearCenter = position.subtract(
-                forward.scale(REAR_COLLISION_OFFSET)
-        );
-
-        return new AABB[]{
-            createCollisionBox(frontCenter),
-            createCollisionBox(position),
-            createCollisionBox(rearCenter)
-        };
     }
 
     private boolean hasMotorcycleCollision(Vec3 position, float yaw) {

@@ -56,11 +56,6 @@ public final class MotorcycleKeyMappings {
         boolean right = ridingMotorcycle && RIGHT.isDown();
 
         if (forward != lastForward || backward != lastBackward || left != lastLeft || right != lastRight) {
-            if (minecraft.player != null && minecraft.player.getVehicle() instanceof MotorcycleEntity motorcycle) {
-
-                motorcycle.setInput(forward, backward, left, right);
-            }
-
             PacketDistributor.sendToServer(new MotorcycleInputPayload(forward, backward, left, right));
 
             lastForward = forward;

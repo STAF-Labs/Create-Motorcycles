@@ -5,6 +5,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
 
 public record MotorcycleInputPayload(boolean forward, boolean backward, boolean left, boolean right) implements CustomPacketPayload {
@@ -29,7 +30,10 @@ public record MotorcycleInputPayload(boolean forward, boolean backward, boolean 
         context.enqueueWork(() -> {
             Entity vehicle = context.player().getVehicle();
             if (vehicle instanceof MotorcycleEntity motorcycle) {
-                motorcycle.setInput(payload.forward, payload.backward, payload.left, payload.right);
+                LivingEntity controllingPassenger = motorcycle.getControllingPassenger();
+                if (controllingPassenger == context.player()) {
+                    motorcycle.setInput(new MotorcycleInput(payload.forward, payload.backward, payload.left, payload.right));
+                }
             }
         });
     }
