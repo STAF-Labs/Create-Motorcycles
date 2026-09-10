@@ -39,7 +39,7 @@ public abstract class PlayerModelMixin<T extends LivingEntity> extends HumanoidM
 
     @Inject(method = "setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V", at = @At("TAIL"))
     private void createMotorcycles$poseMotorcycleRider(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo callbackInfo) {
-        if (!(entity.getVehicle() instanceof MotorcycleEntity motorcycle)) {
+        if (!(entity.getVehicle() instanceof MotorcycleEntity)) {
             return;
         }
 
@@ -47,10 +47,7 @@ public abstract class PlayerModelMixin<T extends LivingEntity> extends HumanoidM
                 entity == Minecraft.getInstance().player
                         && Minecraft.getInstance().options.getCameraType().isFirstPerson();
 
-        float terrainPitch = motorcycle.getVisualPitch(1.0F);
-        float terrainPitchRadians = createMotorcycles$radians(terrainPitch);
-
-        this.body.xRot = createMotorcycles$radians(50.0F) - terrainPitchRadians;
+        this.body.xRot = createMotorcycles$radians(50.0F);
         this.body.yRot = 0.0F;
         this.body.zRot = 0.0F;
         this.body.y = 3.0F;
@@ -76,7 +73,7 @@ public abstract class PlayerModelMixin<T extends LivingEntity> extends HumanoidM
             this.leftArm.y = 2.0F;
             this.leftArm.z = 0.0F;
         } else {
-            this.rightArm.xRot = createMotorcycles$radians(-82.0F) - terrainPitchRadians;
+            this.rightArm.xRot = createMotorcycles$radians(-82.0F);
             this.rightArm.yRot = createMotorcycles$radians(-8.0F);
             this.rightArm.zRot = createMotorcycles$radians(4.0F);
 
@@ -84,7 +81,7 @@ public abstract class PlayerModelMixin<T extends LivingEntity> extends HumanoidM
             this.rightArm.y = this.body.y + 1.0F;
             this.rightArm.z = this.body.z;
 
-            this.leftArm.xRot = createMotorcycles$radians(-82.0F) - terrainPitchRadians;
+            this.leftArm.xRot = createMotorcycles$radians(-82.0F);
             this.leftArm.yRot = createMotorcycles$radians(8.0F);
             this.leftArm.zRot = createMotorcycles$radians(-4.0F);
 
@@ -93,10 +90,10 @@ public abstract class PlayerModelMixin<T extends LivingEntity> extends HumanoidM
             this.leftArm.z = this.body.z;
         }
 
-        this.rightLeg.xRot = createMotorcycles$radians(-58.0F) - terrainPitchRadians;
+        this.rightLeg.xRot = createMotorcycles$radians(-58.0F);
         this.rightLeg.yRot = createMotorcycles$radians(8.0F);
         this.rightLeg.zRot = createMotorcycles$radians(3.0F);
-        this.leftLeg.xRot = createMotorcycles$radians(-58.0F) - terrainPitchRadians;
+        this.leftLeg.xRot = createMotorcycles$radians(-58.0F);
         this.leftLeg.yRot = createMotorcycles$radians(-8.0F);
         this.leftLeg.zRot = createMotorcycles$radians(-3.0F);
 
