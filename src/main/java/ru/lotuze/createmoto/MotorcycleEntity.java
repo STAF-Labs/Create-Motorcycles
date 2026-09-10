@@ -55,6 +55,12 @@ public class MotorcycleEntity extends Entity {
     private float visualPitchOld;
     private float visualPitch;
     private Vec3 previousVisualPosition;
+    private int clientLerpSteps;
+    private double clientLerpX;
+    private double clientLerpY;
+    private double clientLerpZ;
+    private double clientLerpYRot;
+    private double clientLerpXRot;
 
     public MotorcycleEntity(EntityType<? extends MotorcycleEntity> entityType, Level level) {
         super(entityType, level);
@@ -103,6 +109,7 @@ public class MotorcycleEntity extends Entity {
     }
 
     private void tickClientVisualState() {
+        this.tickClientLerp();
         this.steeringAngleOld = this.steeringAngle;
         this.steeringAngle = this.entityData.get(DATA_STEERING_ANGLE);
         this.updateVisualPitch();
@@ -136,6 +143,37 @@ public class MotorcycleEntity extends Entity {
         this.updateWheelRotation(positionBeforeMove);
     }
 
+    @Override
+    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
+        if (!this.level().isClientSide) {
+            super.lerpTo(x, y, z, yRot, xRot, steps);
+            return;
+        }
+
+        this.clientLerpX = x;
+        this.clientLerpY = y;
+        this.clientLerpZ = z;
+        this.clientLerpYRot = yRot;
+        this.clientLerpXRot = xRot;
+        this.clientLerpSteps = Math.max(steps, 1);
+    }
+
+    private void tickClientLerp() {
+        if (this.clientLerpSteps <= 0) {
+            return;
+        }
+
+        this.lerpPositionAndRotationStep(
+                this.clientLerpSteps,
+                this.clientLerpX,
+                this.clientLerpY,
+                this.clientLerpZ,
+                this.clientLerpYRot,
+                this.clientLerpXRot
+        );
+        this.clientLerpSteps--;
+    }
+
     public void setInput(MotorcycleInput input) {
         this.input = input;
     }
@@ -160,7 +198,6 @@ public class MotorcycleEntity extends Entity {
         }
 
         if (!this.level().isClientSide && !player.isPassenger() && this.getPassengers().isEmpty()) {
-            this.setYRot(player.getYRot());
             player.setYRot(this.getYRot());
             player.startRiding(this);
         }
@@ -376,6 +413,7 @@ public class MotorcycleEntity extends Entity {
 
         if (this.steppingThisTick) {
             verticalMovement = finalMovement.y;
+            finalMovement = new Vec3(desiredMovement.x, verticalMovement, desiredMovement.z);
         } else {
             verticalMovement = velocity.y;
         }

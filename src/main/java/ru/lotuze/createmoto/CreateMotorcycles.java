@@ -25,7 +25,7 @@ public class CreateMotorcycles {
                     () -> EntityType.Builder.<MotorcycleEntity>of(MotorcycleEntity::new, MobCategory.MISC)
                         .sized(0.85F, 1.25F)
                         .clientTrackingRange(10)
-                        .updateInterval(3)
+                        .updateInterval(1)
                         .build("motorcycle"));
 
     public CreateMotorcycles(IEventBus modEventBus, ModContainer modContainer) {
