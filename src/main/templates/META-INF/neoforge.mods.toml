@@ -11,7 +11,7 @@ Example mod description.
 '''
 
 [[mixins]]
-config = "create_motorcycles.mixins.json"
+config = "create_motorcycles_motorcycle.mixins.json"
 
 [[dependencies.${mod_id}]]
     modId="neoforge"

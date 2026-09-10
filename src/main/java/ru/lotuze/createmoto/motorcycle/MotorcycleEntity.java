@@ -1,6 +1,8 @@
-package ru.lotuze.createmoto;
+package ru.lotuze.createmoto.motorcycle;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionHand;
@@ -11,11 +13,11 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class MotorcycleEntity extends Entity {
+    private static final EntityDataAccessor<Float> DATA_STEERING_ANGLE = SynchedEntityData.defineId(MotorcycleEntity.class, EntityDataSerializers.FLOAT);
+
     private static final double RIDER_FORWARD_OFFSET = -0.52D;
     private static final double RIDER_RIGHT_OFFSET = 0.0D;
     private static final double RIDER_UP_OFFSET = 0.12D;
@@ -30,21 +32,9 @@ public class MotorcycleEntity extends Entity {
     private static final double HALF_WHEELBASE = 0.85D;
     private static final double WHEEL_RADIUS = 5.02406D / 16.0D;
 
-    private static final double COLLISION_HALF_WIDTH = 0.42D;
-    private static final double COLLISION_HEIGHT = 1.20D;
-    private static final double FRONT_COLLISION_OFFSET = 0.78D;
-    private static final double REAR_COLLISION_OFFSET = 0.78D;
-    private static final double COLLISION_EPSILON = 1.0E-4D;
-
-    private static final double MAX_STEP_HEIGHT = 1.0D;
     private static final float VISUAL_PITCH_LERP = 0.25F;
-    private static final double STEP_INCREMENT = 0.125D;
-    private static final double GROUND_CHECK_DEPTH = 0.08D;
     private static final double GRAVITY = 0.08D;
 
-    private static final double TERRAIN_PROBE_RADIUS = 0.08D;
-    private static final double TERRAIN_PROBE_UP = 0.25D;
-    private static final double TERRAIN_PROBE_DEPTH = 1.25D;
     private static final float MAX_TERRAIN_PITCH = 35.0F;
 
     private static final double YAW_LERP = 0.20D;
@@ -60,13 +50,17 @@ public class MotorcycleEntity extends Entity {
     private float wheelRotationOld;
     private float wheelRotation;
     private double yawVelocity;
-    private boolean forwardInput;
-    private boolean backwardInput;
-    private boolean leftInput;
-    private boolean rightInput;
+    private MotorcycleInput input = MotorcycleInput.NONE;
     private boolean steppingThisTick;
     private float visualPitchOld;
     private float visualPitch;
+    private Vec3 previousVisualPosition;
+    private int clientLerpSteps;
+    private double clientLerpX;
+    private double clientLerpY;
+    private double clientLerpZ;
+    private double clientLerpYRot;
+    private double clientLerpXRot;
 
     public MotorcycleEntity(EntityType<? extends MotorcycleEntity> entityType, Level level) {
         super(entityType, level);
@@ -74,6 +68,7 @@ public class MotorcycleEntity extends Entity {
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        builder.define(DATA_STEERING_ANGLE, 0.0F);
     }
 
     public float getSteeringAngle(float partialTick) {
@@ -104,49 +99,85 @@ public class MotorcycleEntity extends Entity {
     public void tick() {
         super.tick();
 
-        Vec3 positionBeforeMove = this.position();
+        if (this.level().isClientSide) {
+            this.tickClientVisualState();
+            return;
+        }
 
+        this.tickServerPhysics();
+    }
+
+    private void tickClientVisualState() {
+        this.tickClientLerp();
+        this.steeringAngleOld = this.steeringAngle;
+        this.steeringAngle = this.entityData.get(DATA_STEERING_ANGLE);
+        this.updateVisualPitch();
+        if (this.previousVisualPosition != null) {
+            this.updateWheelRotation(this.previousVisualPosition);
+        }
+        this.previousVisualPosition = this.position();
+    }
+
+    private void tickServerPhysics() {
         this.steppingThisTick = false;
-
         this.tickMotorcyclePhysics();
 
         if (!this.steppingThisTick) {
             Vec3 movement = this.getDeltaMovement();
-
-            this.setDeltaMovement(
-                    movement.x,
-                    movement.y - GRAVITY,
-                    movement.z
-            );
+            this.setDeltaMovement(movement.x, movement.y - GRAVITY, movement.z);
         }
 
         this.move(MoverType.SELF, this.getDeltaMovement());
 
         if (this.onGround() && this.getDeltaMovement().y < 0.0D) {
             Vec3 movement = this.getDeltaMovement();
-
             this.setDeltaMovement(movement.x, 0.0D, movement.z);
         }
 
         if (this.steppingThisTick) {
             Vec3 movement = this.getDeltaMovement();
-
-            this.setDeltaMovement(
-                    movement.x,
-                    0.0D,
-                    movement.z
-            );
+            this.setDeltaMovement(movement.x, 0.0D, movement.z);
         }
 
-        this.updateVisualPitch();
-        this.updateWheelRotation(positionBeforeMove);
     }
 
-    public void setInput(boolean forward, boolean backward, boolean left, boolean right) {
-        this.forwardInput = forward;
-        this.backwardInput = backward;
-        this.leftInput = left;
-        this.rightInput = right;
+    @Override
+    public void lerpTo(double x, double y, double z, float yRot, float xRot, int steps) {
+        if (!this.level().isClientSide) {
+            super.lerpTo(x, y, z, yRot, xRot, steps);
+            return;
+        }
+
+        this.clientLerpX = x;
+        this.clientLerpY = y;
+        this.clientLerpZ = z;
+        this.clientLerpYRot = yRot;
+        this.clientLerpXRot = xRot;
+        this.clientLerpSteps = Math.max(steps, 1);
+    }
+
+    private void tickClientLerp() {
+        if (this.clientLerpSteps <= 0) {
+            return;
+        }
+
+        this.lerpPositionAndRotationStep(
+                this.clientLerpSteps,
+                this.clientLerpX,
+                this.clientLerpY,
+                this.clientLerpZ,
+                this.clientLerpYRot,
+                this.clientLerpXRot
+        );
+        this.clientLerpSteps--;
+    }
+
+    public void setInput(MotorcycleInput input) {
+        this.input = input == null ? MotorcycleInput.NONE : input;
+    }
+
+    private void clearInput() {
+        this.input = MotorcycleInput.NONE;
     }
 
     @Override
@@ -165,17 +196,12 @@ public class MotorcycleEntity extends Entity {
         }
 
         if (!this.level().isClientSide && !player.isPassenger() && this.getPassengers().isEmpty()) {
-            this.setYRot(player.getYRot());
             player.setYRot(this.getYRot());
             player.startRiding(this);
         }
 
         player.swing(hand);
         return InteractionResult.sidedSuccess(this.level().isClientSide);
-    }
-
-    private String debugSide() {
-        return this.level().isClientSide ? "CLIENT" : "SERVER";
     }
 
     @Override
@@ -189,15 +215,33 @@ public class MotorcycleEntity extends Entity {
     }
 
     @Override
+    public boolean isControlledByLocalInstance() {
+        return !this.level().isClientSide;
+    }
+
+    @Override
     public LivingEntity getControllingPassenger() {
         Entity passenger = this.getFirstPassenger();
         return passenger instanceof LivingEntity livingEntity ? livingEntity : null;
     }
 
     @Override
+    protected void removePassenger(Entity passenger) {
+        super.removePassenger(passenger);
+        this.clearInput();
+    }
+
+    @Override
+    public void remove(RemovalReason reason) {
+        this.clearInput();
+        super.remove(reason);
+    }
+
+    @Override
     protected void positionRider(Entity passenger, MoveFunction moveFunction) {
         if (this.hasPassenger(passenger)) {
-            Vec3 offset = riderOffset(this.getYRot());
+            float pitch = this.level().isClientSide ? this.getVisualPitch(1.0F) : 0.0F;
+            Vec3 offset = riderOffset(this.getYRot(), pitch);
 
             moveFunction.accept(
                     passenger,
@@ -218,13 +262,19 @@ public class MotorcycleEntity extends Entity {
         return this.position().add(offset.x, 0.1D, offset.z);
     }
 
-    private static Vec3 riderOffset(float yawDegrees) {
+    private static Vec3 riderOffset(float yawDegrees, float pitchDegrees) {
         double yaw = Math.toRadians(yawDegrees);
+        double pitch = Math.toRadians(pitchDegrees);
         Vec3 forward = new Vec3(-Math.sin(yaw), 0.0D, Math.cos(yaw));
         Vec3 right = new Vec3(Math.cos(yaw), 0.0D, Math.sin(yaw));
-        return forward.scale(RIDER_FORWARD_OFFSET)
+        Vec3 up = new Vec3(0.0D, 1.0D, 0.0D);
+
+        double pitchedForward = RIDER_FORWARD_OFFSET * Math.cos(pitch) - RIDER_UP_OFFSET * Math.sin(pitch);
+        double pitchedUp = RIDER_FORWARD_OFFSET * Math.sin(pitch) + RIDER_UP_OFFSET * Math.cos(pitch);
+
+        return forward.scale(pitchedForward)
                 .add(right.scale(RIDER_RIGHT_OFFSET))
-                .add(0.0D, RIDER_UP_OFFSET, 0.0D);
+                .add(up.scale(pitchedUp));
     }
 
     private static Vec3 rotateOffset(Vec3 localOffset, float yawDegrees) {
@@ -238,10 +288,7 @@ public class MotorcycleEntity extends Entity {
 
     private void tickMotorcyclePhysics() {
         if (this.getControllingPassenger() == null) {
-            this.forwardInput = false;
-            this.backwardInput = false;
-            this.leftInput = false;
-            this.rightInput = false;
+            this.clearInput();
         }
 
         this.updateSteering();
@@ -256,9 +303,9 @@ public class MotorcycleEntity extends Entity {
         float targetThrottle = 0.0F;
         boolean braking = false;
 
-        if (this.forwardInput && !this.backwardInput) {
+        if (this.input.forward() && !this.input.backward()) {
             targetThrottle = 1.0F;
-        } else if (this.backwardInput && !this.forwardInput) {
+        } else if (this.input.backward() && !this.input.forward()) {
             if (rearForwardSpeed > REVERSE_THRESHOLD) {
                 braking = true;
             } else {
@@ -346,13 +393,12 @@ public class MotorcycleEntity extends Entity {
         }
 
         Vec3 desiredMovement = finalMovement;
-        finalMovement = resolveMotorcycleCollision(
-                desiredMovement,
-                newYaw
-        );
+        MotorcycleCollision.CollisionResult collisionResult = MotorcycleCollision.resolve(this, desiredMovement, newYaw);
+        finalMovement = collisionResult.movement();
+        this.steppingThisTick = collisionResult.stepped();
 
-        boolean fullyBlocked = desiredMovement.horizontalDistanceSqr() > COLLISION_EPSILON
-                && finalMovement.horizontalDistanceSqr() <= COLLISION_EPSILON;
+        boolean fullyBlocked = desiredMovement.horizontalDistanceSqr() > MotorcycleCollision.collisionEpsilon()
+                && finalMovement.horizontalDistanceSqr() <= MotorcycleCollision.collisionEpsilon();
 
         if (fullyBlocked) {
             this.yawVelocity = 0.0D;
@@ -365,6 +411,7 @@ public class MotorcycleEntity extends Entity {
 
         if (this.steppingThisTick) {
             verticalMovement = finalMovement.y;
+            finalMovement = new Vec3(desiredMovement.x, verticalMovement, desiredMovement.z);
         } else {
             verticalMovement = velocity.y;
         }
@@ -381,39 +428,23 @@ public class MotorcycleEntity extends Entity {
 
         float targetSteering = 0.0F;
 
-        if (this.leftInput) {
+        if (this.input.left()) {
             targetSteering -= 1.0F;
         }
 
-        if (this.rightInput) {
+        if (this.input.right()) {
             targetSteering += 1.0F;
         }
 
         this.steeringInput = Mth.lerp(STEERING_LERP, this.steeringInput, targetSteering);
         this.steeringAngle = this.steeringInput * MAX_STEERING_ANGLE;
+        this.entityData.set(DATA_STEERING_ANGLE, this.steeringAngle);
     }
 
     private float getEffectiveSteeringAngle(double speed) {
         double normalizedSpeed = Mth.clamp(speed / MAX_FORWARD_SPEED, 0.0D, 1.0D);
         float steeringScale = (float) Mth.lerp(normalizedSpeed, 1.0D, 0.30D);
         return this.steeringAngle * steeringScale;
-    }
-
-    private void updateYawFromBicycleModel(double forwardSpeed, float effectiveSteering) {
-        if (Math.abs(forwardSpeed) < MIN_TURN_SPEED) {
-            this.yawVelocity = 0.0D;
-            return;
-        }
-
-        double wheelbase = HALF_WHEELBASE * 2.0D;
-
-        double steeringRadians = Math.toRadians(effectiveSteering);
-
-        double beta = Math.atan(0.5D * Math.tan(steeringRadians));
-
-        double desiredYawVelocity = forwardSpeed / wheelbase * Math.cos(beta) * Math.tan(steeringRadians);
-        this.yawVelocity = Mth.lerp(YAW_LERP, this.yawVelocity, desiredYawVelocity);
-        this.setYRot(this.getYRot() + (float) Math.toDegrees(this.yawVelocity));
     }
 
     private static Vec3 clampForwardSpeed(Vec3 movement, Vec3 forward) {
@@ -427,10 +458,6 @@ public class MotorcycleEntity extends Entity {
         return movement;
     }
 
-    private static Vec3 rightVector(Vec3 forward) {
-        return new Vec3(forward.z, 0.0D, -forward.x);
-    }
-
     private static Vec3 rotateY(Vec3 vector, double angleRadians) {
         double sin = Math.sin(angleRadians);
         double cos = Math.cos(angleRadians);
@@ -442,63 +469,11 @@ public class MotorcycleEntity extends Entity {
         return new Vec3(-Math.sin(yaw), 0.0D, Math.cos(yaw));
     }
 
-    private AABB createCollisionBox(Vec3 center) {
-        return new AABB(
-                center.x - COLLISION_HALF_WIDTH,
-                center.y,
-                center.z - COLLISION_HALF_WIDTH,
-                center.x + COLLISION_HALF_WIDTH,
-                center.y + COLLISION_HEIGHT,
-                center.z + COLLISION_HALF_WIDTH
-        );
-    }
-
-    private AABB[] getCollisionBoxes(Vec3 position, float yaw) {
-        Vec3 forward = forwardVector(yaw);
-
-        Vec3 frontCenter = position.add(
-                forward.scale(FRONT_COLLISION_OFFSET)
-        );
-
-        Vec3 rearCenter = position.subtract(
-                forward.scale(REAR_COLLISION_OFFSET)
-        );
-
-        return new AABB[]{
-            createCollisionBox(frontCenter),
-            createCollisionBox(position),
-            createCollisionBox(rearCenter)
-        };
-    }
-
-    private boolean hasMotorcycleCollision(Vec3 position, float yaw) {
-        Vec3 forward = forwardVector(yaw);
-
-        Vec3 frontCenter = position.add(
-                forward.scale(FRONT_COLLISION_OFFSET)
-        );
-
-        Vec3 rearCenter = position.subtract(
-                forward.scale(REAR_COLLISION_OFFSET)
-        );
-
-        return hasBlockCollision(createCollisionBox(frontCenter))
-                || hasBlockCollision(createCollisionBox(position))
-                || hasBlockCollision(createCollisionBox(rearCenter));
-    }
-
-    private boolean hasBlockCollision(AABB box) {
-        return this.level()
-                .getBlockCollisions(this, box)
-                .iterator()
-                .hasNext();
-    }
-
-    private void updateWheelRotation(Vec3 positionBeforeMove) {
+    private void updateWheelRotation(Vec3 previousPosition) {
         this.wheelRotationOld = this.wheelRotation;
 
-        double dx = this.getX() - positionBeforeMove.x;
-        double dz = this.getZ() - positionBeforeMove.z;
+        double dx = this.getX() - previousPosition.x;
+        double dz = this.getZ() - previousPosition.z;
 
         double distance = Math.sqrt(dx * dx + dz * dz);
 
@@ -523,203 +498,15 @@ public class MotorcycleEntity extends Entity {
         }
     }
 
-    private Vec3 resolveMotorcycleCollision(Vec3 desiredMovement, float yaw) {
-        if (desiredMovement.horizontalDistanceSqr() <= COLLISION_EPSILON) {
-            return desiredMovement;
-        }
-
-        Vec3 currentPosition = this.position();
-
-        Vec3 fullTarget = currentPosition.add(
-                desiredMovement.x,
-                0.0D,
-                desiredMovement.z
-        );
-
-        if (!hasMotorcycleCollision(fullTarget, yaw)) {
-            return desiredMovement;
-        }
-
-        Vec3 stepMovement = findStepMovement(
-                desiredMovement,
-                yaw
-        );
-
-        if (stepMovement != null) {
-            return stepMovement;
-        }
-
-        Vec3 xMovement = new Vec3(
-                desiredMovement.x,
-                0.0D,
-                0.0D
-        );
-
-        Vec3 zMovement = new Vec3(
-                0.0D,
-                0.0D,
-                desiredMovement.z
-        );
-
-        boolean canMoveX = Math.abs(desiredMovement.x) > 1.0E-6D
-                && !hasMotorcycleCollision(
-                        currentPosition.add(xMovement),
-                        yaw
-                );
-
-        boolean canMoveZ = Math.abs(desiredMovement.z) > 1.0E-6D
-                && !hasMotorcycleCollision(
-                        currentPosition.add(zMovement),
-                        yaw
-                );
-
-        if (canMoveX && canMoveZ) {
-            return Math.abs(desiredMovement.x) >= Math.abs(desiredMovement.z) ? xMovement : zMovement;
-        }
-
-        if (canMoveX) { return xMovement; }
-        if (canMoveZ) { return zMovement; }
-
-        return Vec3.ZERO;
-    }
-
-    private Vec3 findStepMovement(Vec3 desiredMovement, float yaw) {
-        Vec3 currentPosition = this.position();
-
-        if (!hasMotorcycleGroundSupport(currentPosition, yaw)) {
-            return null;
-        }
-
-        for (
-                double stepHeight = STEP_INCREMENT;
-                stepHeight <= MAX_STEP_HEIGHT + 1.0E-6D;
-                stepHeight += STEP_INCREMENT
-        ) {
-            Vec3 raisedPosition = currentPosition.add(
-                    0.0D,
-                    stepHeight,
-                    0.0D
-            );
-
-            if (hasMotorcycleCollision(raisedPosition, yaw)) {
-                continue;
-            }
-
-            Vec3 steppedTarget = currentPosition.add(
-                    desiredMovement.x,
-                    stepHeight,
-                    desiredMovement.z
-            );
-
-            if (hasMotorcycleCollision(steppedTarget, yaw)) {
-               continue;
-            }
-
-            this.steppingThisTick = true;
-
-            return new Vec3(
-                    desiredMovement.x,
-                    stepHeight,
-                    desiredMovement.z
-            );
-        }
-
-        return null;
-    }
-
-    private boolean hasMotorcycleGroundSupport(Vec3 position, float yaw) {
-        Vec3 forward = forwardVector(yaw);
-
-        Vec3 frontCenter = position.add(
-                forward.scale(FRONT_COLLISION_OFFSET)
-        );
-
-        Vec3 rearCenter = position.subtract(
-                forward.scale(REAR_COLLISION_OFFSET)
-        );
-
-        return hasBoxGroundSupport(createCollisionBox(frontCenter))
-                || hasBoxGroundSupport(createCollisionBox(position))
-                || hasBoxGroundSupport(createCollisionBox(rearCenter));
-    }
-
-    private boolean hasBoxGroundSupport(AABB box) {
-        AABB groundCheck = box.move(
-                0.0D,
-                -GROUND_CHECK_DEPTH,
-                0.0D
-        );
-
-        return this.level()
-                .getBlockCollisions(this, groundCheck)
-                .iterator()
-                .hasNext();
-    }
-
-    private double findGroundHeight(Vec3 point) {
-        AABB probe = new AABB(
-                point.x - TERRAIN_PROBE_RADIUS,
-                point.y - TERRAIN_PROBE_DEPTH,
-                point.z - TERRAIN_PROBE_RADIUS,
-                point.x + TERRAIN_PROBE_RADIUS,
-                point.y + TERRAIN_PROBE_UP,
-                point.z + TERRAIN_PROBE_RADIUS
-        );
-
-        double highestGround = Double.NEGATIVE_INFINITY;
-
-        for (VoxelShape shape : this.level().getBlockCollisions(this, probe)) {
-            if (shape.isEmpty()) {
-                continue;
-            }
-
-            AABB bounds = shape.bounds();
-
-            if (bounds.maxY <= point.y + TERRAIN_PROBE_UP + 1.0E-6D) {
-                highestGround = Math.max(
-                        highestGround,
-                        bounds.maxY
-                );
-            }
-        }
-
-        return highestGround;
-    }
-
     private void updateVisualPitch() {
         this.visualPitchOld = this.visualPitch;
-
-        Vec3 forward = forwardVector(this.getYRot());
-
-        Vec3 frontProbe = this.position().add(
-                forward.scale(HALF_WHEELBASE)
+        float targetPitch = MotorcycleCollision.calculateTerrainPitch(
+                this,
+                this.position(),
+                this.getYRot(),
+                HALF_WHEELBASE,
+                MAX_TERRAIN_PITCH
         );
-
-        Vec3 rearProbe = this.position().subtract(
-                forward.scale(HALF_WHEELBASE)
-        );
-
-        double frontGroundY = findGroundHeight(frontProbe);
-        double rearGroundY = findGroundHeight(rearProbe);
-
-        float targetPitch = 0.0F;
-
-        if (Double.isFinite(frontGroundY)
-                && Double.isFinite(rearGroundY)) {
-
-            double heightDifference =
-                    frontGroundY - rearGroundY;
-
-            targetPitch = calculateStepPitch(
-                    heightDifference
-            );
-
-            targetPitch = Mth.clamp(
-                    targetPitch,
-                    -MAX_TERRAIN_PITCH,
-                    MAX_TERRAIN_PITCH
-            );
-        }
 
         this.visualPitch = Mth.lerp(
                 VISUAL_PITCH_LERP,
@@ -731,14 +518,6 @@ public class MotorcycleEntity extends Entity {
                 && Math.abs(targetPitch) < 0.01F) {
             this.visualPitch = 0.0F;
         }
-    }
-
-    private float calculateStepPitch(double stepHeight) {
-        double wheelbase = HALF_WHEELBASE * 2.0D;
-
-        return (float) Math.toDegrees(
-                Math.atan(stepHeight / wheelbase)
-        );
     }
 
     @Override

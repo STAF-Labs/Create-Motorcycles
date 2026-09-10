@@ -11,6 +11,8 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.slf4j.Logger;
+import ru.lotuze.createmoto.motorcycle.MotorcycleEntity;
+import ru.lotuze.createmoto.motorcycle.MotorcycleInputPayload;
 
 @Mod(CreateMotorcycles.MODID)
 public class CreateMotorcycles {
@@ -25,7 +27,7 @@ public class CreateMotorcycles {
                     () -> EntityType.Builder.<MotorcycleEntity>of(MotorcycleEntity::new, MobCategory.MISC)
                         .sized(0.85F, 1.25F)
                         .clientTrackingRange(10)
-                        .updateInterval(3)
+                        .updateInterval(1)
                         .build("motorcycle"));
 
     public CreateMotorcycles(IEventBus modEventBus, ModContainer modContainer) {

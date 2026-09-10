@@ -1,11 +1,13 @@
-package ru.lotuze.createmoto;
+package ru.lotuze.createmoto.motorcycle;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.neoforge.network.handling.IPayloadContext;
+import ru.lotuze.createmoto.CreateMotorcycles;
 
 public record MotorcycleInputPayload(boolean forward, boolean backward, boolean left, boolean right) implements CustomPacketPayload {
     public static final Type<MotorcycleInputPayload> TYPE = new Type<>(ResourceLocation.fromNamespaceAndPath(CreateMotorcycles.MODID, "motorcycle_input"));
@@ -29,9 +31,16 @@ public record MotorcycleInputPayload(boolean forward, boolean backward, boolean 
         context.enqueueWork(() -> {
             Entity vehicle = context.player().getVehicle();
             if (vehicle instanceof MotorcycleEntity motorcycle) {
-                motorcycle.setInput(payload.forward, payload.backward, payload.left, payload.right);
+                LivingEntity controllingPassenger = motorcycle.getControllingPassenger();
+                if (controllingPassenger == context.player()) {
+                    motorcycle.setInput(payload.toInput());
+                }
             }
         });
+    }
+
+    private MotorcycleInput toInput() {
+        return new MotorcycleInput(this.forward, this.backward, this.left, this.right);
     }
 
     @Override

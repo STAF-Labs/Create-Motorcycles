@@ -1,4 +1,4 @@
-package ru.lotuze.createmoto;
+package ru.lotuze.createmoto.motorcycle.client;
 
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
@@ -7,6 +7,8 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.settings.KeyConflictContext;
 import net.neoforged.neoforge.network.PacketDistributor;
 import org.lwjgl.glfw.GLFW;
+import ru.lotuze.createmoto.motorcycle.MotorcycleEntity;
+import ru.lotuze.createmoto.motorcycle.MotorcycleInputPayload;
 
 public final class MotorcycleKeyMappings {
     private static final String CATEGORY = "key.categories.create_motorcycles";
@@ -48,19 +50,21 @@ public final class MotorcycleKeyMappings {
 
     public static void onClientTick(ClientTickEvent.Post event) {
         Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null) {
+            lastForward = false;
+            lastBackward = false;
+            lastLeft = false;
+            lastRight = false;
+            return;
+        }
 
-        boolean ridingMotorcycle = minecraft.player != null && minecraft.player.getVehicle() instanceof MotorcycleEntity;
+        boolean ridingMotorcycle = minecraft.player.getVehicle() instanceof MotorcycleEntity;
         boolean forward = ridingMotorcycle && FORWARD.isDown();
         boolean backward = ridingMotorcycle && BACKWARD.isDown();
         boolean left = ridingMotorcycle && LEFT.isDown();
         boolean right = ridingMotorcycle && RIGHT.isDown();
 
         if (forward != lastForward || backward != lastBackward || left != lastLeft || right != lastRight) {
-            if (minecraft.player != null && minecraft.player.getVehicle() instanceof MotorcycleEntity motorcycle) {
-
-                motorcycle.setInput(forward, backward, left, right);
-            }
-
             PacketDistributor.sendToServer(new MotorcycleInputPayload(forward, backward, left, right));
 
             lastForward = forward;

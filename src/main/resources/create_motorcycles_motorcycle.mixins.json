@@ -1,8 +1,9 @@
 {
   "required": true,
-  "package": "ru.lotuze.createmoto.mixin",
+  "package": "ru.lotuze.createmoto.motorcycle.client.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": [
+    "LivingEntityRendererMixin",
     "PlayerModelMixin"
   ],
   "injectors": {
