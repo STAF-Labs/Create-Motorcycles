@@ -16,6 +16,7 @@ import ru.lotuze.createmoto.motorcycle.MotorcycleInputPayload;
 import ru.lotuze.createmoto.registry.ModBlockEntities;
 import ru.lotuze.createmoto.registry.ModBlocks;
 import ru.lotuze.createmoto.registry.ModItems;
+import ru.lotuze.createmoto.registry.ModMenus;
 
 @Mod(CreateMotorcycles.MODID)
 public class CreateMotorcycles {
@@ -42,6 +43,7 @@ public class CreateMotorcycles {
         ModBlocks.BLOCKS.register(modEventBus);
         ModItems.ITEMS.register(modEventBus);
         ModBlockEntities.BLOCK_ENTITIES.register(modEventBus);
+        ModMenus.MENUS.register(modEventBus);
     }
 
     private void registerPayloadHandlers(RegisterPayloadHandlersEvent event) {

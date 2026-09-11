@@ -9,20 +9,23 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.gui.ConfigurationScreen;
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import ru.lotuze.createmoto.motorcycle.client.MotorcycleKeyMappings;
 import ru.lotuze.createmoto.motorcycle.client.MotorcycleRenderer;
+import ru.lotuze.createmoto.registry.ModMenus;
+import ru.lotuze.createmoto.station.client.ServiceStationScreen;
 
-// This class will not load on dedicated servers. Accessing client side code from here is safe.
 @Mod(value = CreateMotorcycles.MODID, dist = Dist.CLIENT)
 public class CreateMotorcyclesClient {
+
     public CreateMotorcyclesClient(IEventBus modEventBus, ModContainer container) {
+
         modEventBus.addListener(CreateMotorcyclesClient::registerKeyMappings);
         modEventBus.addListener(CreateMotorcyclesClient::registerRenderers);
+        modEventBus.addListener(CreateMotorcyclesClient::registerScreen);
+
         NeoForge.EVENT_BUS.addListener(MotorcycleKeyMappings::onClientTick);
 
-        // Allows NeoForge to create a config screen for this mod's configs.
-        // The config screen is accessed by going to the Mods screen > clicking on your mod > clicking on config.
-        // Do not forget to add translations for your config options to the en_us.json file.
         container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
     }
 
@@ -35,5 +38,9 @@ public class CreateMotorcyclesClient {
         event.register(MotorcycleKeyMappings.BACKWARD);
         event.register(MotorcycleKeyMappings.LEFT);
         event.register(MotorcycleKeyMappings.RIGHT);
+    }
+
+    static void registerScreen(RegisterMenuScreensEvent event) {
+        event.register(ModMenus.SERVICE_STATION.get(), ServiceStationScreen::new);
     }
 }

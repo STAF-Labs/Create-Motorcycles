@@ -3,6 +3,8 @@ package ru.lotuze.createmoto.station;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -253,15 +255,46 @@ public class ServiceStationBlock extends Block implements EntityBlock {
             BlockState masterState,
             Player player
     ) {
+        if (!(player instanceof ServerPlayer serverPlayer)) { return; }
+
         BlockEntity blockEntity = level.getBlockEntity(masterPos);
 
-        if (!(blockEntity instanceof ServiceStationBlockEntity station)) {
-            return;
-        }
+        if (!(blockEntity instanceof ServiceStationBlockEntity station)) { return; }
 
-        player.displayClientMessage(
-                Component.literal("Service Station BlockEntity OK"),
-                true
+        MotorcycleDetectionResult detection = station.detectMotorcycle();
+
+        ServiceStationMenuData data = ServiceStationMenuData.from(detection);
+
+        serverPlayer.openMenu(
+                new SimpleMenuProvider(
+                        (containerId, inventory, menuPlayer) ->
+                                new ServiceStationMenu(
+                                        containerId,
+                                        inventory,
+                                        masterPos,
+                                        data
+                                ),
+                        Component.translatable(
+                                "menu.create_motorcycles.service_station"
+                        )
+                ),
+                buffer -> {
+                    buffer.writeBlockPos(masterPos);
+                    buffer.writeEnum(data.status());
+                    buffer.writeVarInt(data.count());
+                    buffer.writeVarInt(data.entityId());
+                    buffer.writeBoolean(data.entityUuid() != null);
+
+                    if (data.entityUuid() != null) {
+
+                        buffer.writeUUID(data.entityUuid());
+
+                    }
+
+                    buffer.writeDouble(data.x());
+                    buffer.writeDouble(data.y());
+                    buffer.writeDouble(data.z());
+                }
         );
     }
 }

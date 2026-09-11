@@ -9,5 +9,21 @@
 
   "block.create_motorcycles.service_station": "Service station",
 
-  "message.create_motorcycles.service_station.no_space": "Not enough space to place the Service Station"
+  "message.create_motorcycles.service_station.no_space": "Not enough space to place the Service Station",
+
+  "screen.create_motorcycles.service_station.motorcycle_found": "Motorcycle found",
+  "screen.create_motorcycles.service_station.motorcycle_not_found": "Motorcycle not found",
+  "screen.create_motorcycles.service_station.lock": "Lock Motorcycle",
+  "screen.create_motorcycles.service_station.locked": "Locked",
+  "screen.create_motorcycles.service_station.status": "Status:",
+  "screen.create_motorcycles.service_station.status_ready": "Ready",
+  "screen.create_motorcycles.service_station.status_waiting": "Waiting",
+  "screen.create_motorcycles.service_station.status_working": "Working",
+  "screen.create_motorcycles.service_station.motorcycle": "Motorcycle:",
+  "screen.create_motorcycles.service_station.detected": "Detected",
+  "screen.create_motorcycles.service_station.not_detected": "Not detected",
+  "screen.create_motorcycles.service_station.mode": "Mode:",
+  "screen.create_motorcycles.service_station.awaiting_lock": "Awaiting lock",
+  "screen.create_motorcycles.service_station.idle": "Idle",
+  "screen.create_motorcycles.service_station.maintenance": "Maintenance"
 }

@@ -9,5 +9,21 @@
 
   "block.create_motorcycles.service_station": "Сервисная станция",
 
-  "message.create_motorcycles.service_station.no_space": "Недостаточно места для установки сервисной станции"
+  "message.create_motorcycles.service_station.no_space": "Недостаточно места для установки сервисной станции",
+
+  "screen.create_motorcycles.service_station.motorcycle_found": "Мотоцикл найден",
+  "screen.create_motorcycles.service_station.motorcycle_not_found": "Мотоцикл не найден",
+  "screen.create_motorcycles.service_station.lock": "Зафиксировать мотоцикл",
+  "screen.create_motorcycles.service_station.locked": "Зафиксирован",
+  "screen.create_motorcycles.service_station.status": "Состояние:",
+  "screen.create_motorcycles.service_station.status_ready": "Готова",
+  "screen.create_motorcycles.service_station.status_waiting": "Ожидание",
+  "screen.create_motorcycles.service_station.status_working": "В работе",
+  "screen.create_motorcycles.service_station.motorcycle": "Мотоцикл:",
+  "screen.create_motorcycles.service_station.detected": "Обнаружен",
+  "screen.create_motorcycles.service_station.not_detected": "Не обнаружен",
+  "screen.create_motorcycles.service_station.mode": "Режим:",
+  "screen.create_motorcycles.service_station.awaiting_lock": "Ожидание фиксации",
+  "screen.create_motorcycles.service_station.idle": "Ожидание",
+  "screen.create_motorcycles.service_station.maintenance": "Обслуживание"
 }
