@@ -1,5 +1,6 @@
 package ru.lotuze.createmoto.station.client;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -17,7 +18,7 @@ public class ServiceStationScreen extends AbstractContainerScreen<ServiceStation
     private final ServiceStationOverviewScreen overviewScreen;
     private final ServiceStationWorkbenchScreen workbenchScreen;
 
-    private Page currentPage = Page.OVERVIEW;
+    private Page currentPage;
 
     public ServiceStationScreen(
             ServiceStationMenu menu,
@@ -31,6 +32,10 @@ public class ServiceStationScreen extends AbstractContainerScreen<ServiceStation
 
         this.overviewScreen = new ServiceStationOverviewScreen(this);
         this.workbenchScreen = new ServiceStationWorkbenchScreen(this);
+
+        this.currentPage = menu.isInitiallyLocked()
+                ? Page.WORKBENCH
+                : Page.OVERVIEW;
     }
 
     @Override
@@ -59,9 +64,21 @@ public class ServiceStationScreen extends AbstractContainerScreen<ServiceStation
 
         switch (currentPage) {
             case OVERVIEW -> overviewScreen.render(graphics, mouseX, mouseY, partialTick);
-            case WORKBENCH -> {
-                workbenchScreen.render(graphics, mouseX, mouseY, partialTick);
-            }
+            case WORKBENCH -> workbenchScreen.render(graphics, mouseX, mouseY, partialTick);
+
+        }
+    }
+
+    protected void containerTick() {
+        super.containerTick();
+
+        if (currentPage == Page.OVERVIEW && menu.isMotorcycleLocked()) {
+            setPage(Page.WORKBENCH);
+        }
+
+        if (currentPage == Page.WORKBENCH
+                && !menu.isMotorcycleLocked()) {
+            setPage(Page.OVERVIEW);
         }
     }
 
@@ -83,21 +100,49 @@ public class ServiceStationScreen extends AbstractContainerScreen<ServiceStation
         return super.mouseClicked(mouseX, mouseY, button);
     }
 
-    public void setPage(Page page) { this.currentPage = page; }
+    public void setPage(Page page) {
+        this.currentPage = page;
+    }
+    public Page getPage() {
+        return currentPage;
+    }
 
-    public Page getPage() { return currentPage; }
+    ServiceStationMenu getStationMenu() {
+        return menu;
+    }
 
-    ServiceStationMenu getStationMenu() { return menu; }
+    Font getScreenFont() {
+        return font;
+    }
 
-    Font getScreenFont() { return font; }
+    int getScreenWidth() {
+        return width;
+    }
+    int getScreenHeight() {
+        return height;
+    }
 
-    int getScreenWidth() { return width; }
-    int getScreenHeight() { return height; }
-
-    void closeScreen() { onClose(); }
+    void closeScreen() {
+        onClose();
+    }
 
     @Override
     protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         // Without standard container labels
+    }
+
+    boolean clickMenuButton(int buttonId) {
+        Minecraft minecraft = getMinecraft();
+
+        if (minecraft == null || minecraft.gameMode == null) {
+            return false;
+        }
+
+        minecraft.gameMode.handleInventoryButtonClick(
+                menu.containerId,
+                buttonId
+        );
+
+        return true;
     }
 }

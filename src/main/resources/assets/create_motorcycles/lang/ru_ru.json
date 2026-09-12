@@ -15,6 +15,7 @@
   "screen.create_motorcycles.service_station.motorcycle_not_found": "Мотоцикл не найден",
   "screen.create_motorcycles.service_station.lock": "Зафиксировать мотоцикл",
   "screen.create_motorcycles.service_station.locked": "Зафиксирован",
+  "screen.create_motorcycles.service_station.finish_work": "Завершить работу",
   "screen.create_motorcycles.service_station.status": "Состояние:",
   "screen.create_motorcycles.service_station.status_ready": "Готова",
   "screen.create_motorcycles.service_station.status_waiting": "Ожидание",

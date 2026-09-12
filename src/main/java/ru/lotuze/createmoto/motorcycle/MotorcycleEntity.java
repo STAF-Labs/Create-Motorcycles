@@ -1,5 +1,8 @@
 package ru.lotuze.createmoto.motorcycle;
 
+import com.jcraft.jorbis.Block;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -13,7 +16,12 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MoverType;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.Vec3;
+import ru.lotuze.createmoto.station.ServiceStationBlock;
+import ru.lotuze.createmoto.station.ServiceStationPart;
+
+import javax.annotation.Nullable;
 
 public class MotorcycleEntity extends Entity {
     private static final EntityDataAccessor<Float> DATA_STEERING_ANGLE = SynchedEntityData.defineId(MotorcycleEntity.class, EntityDataSerializers.FLOAT);
@@ -43,6 +51,8 @@ public class MotorcycleEntity extends Entity {
     private static final double MIN_TURN_SPEED = 0.06D;
     private static final double REVERSE_THRESHOLD = 0.035D;
 
+    private static final double SERVICE_Y_OFFSET = 3.0D / 16.0D;
+
     private float throttle;
     private float steeringInput;
     private float steeringAngleOld;
@@ -61,14 +71,20 @@ public class MotorcycleEntity extends Entity {
     private double clientLerpZ;
     private double clientLerpYRot;
     private double clientLerpXRot;
+    @Nullable
+    private BlockPos serviceStationPos;
 
     public MotorcycleEntity(EntityType<? extends MotorcycleEntity> entityType, Level level) {
         super(entityType, level);
     }
 
+    private static final EntityDataAccessor<Boolean> DATA_SERVICE_LOCKED = SynchedEntityData
+            .defineId(MotorcycleEntity.class, EntityDataSerializers.BOOLEAN);
+
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         builder.define(DATA_STEERING_ANGLE, 0.0F);
+        builder.define(DATA_SERVICE_LOCKED, false);
     }
 
     public float getSteeringAngle(float partialTick) {
@@ -101,6 +117,11 @@ public class MotorcycleEntity extends Entity {
 
         if (this.level().isClientSide) {
             this.tickClientVisualState();
+            return;
+        }
+
+        if (this.isServiceLocked()) {
+            this.tickServiceLock();
             return;
         }
 
@@ -173,6 +194,11 @@ public class MotorcycleEntity extends Entity {
     }
 
     public void setInput(MotorcycleInput input) {
+        if (this.isServiceLocked()) {
+            this.input = MotorcycleInput.NONE;
+            return;
+        }
+
         this.input = input == null ? MotorcycleInput.NONE : input;
     }
 
@@ -191,6 +217,10 @@ public class MotorcycleEntity extends Entity {
     }
 
     private InteractionResult tryMount(Player player, InteractionHand hand) {
+        if (this.isServiceLocked()) {
+            return InteractionResult.FAIL;
+        }
+
         if (hand != InteractionHand.MAIN_HAND || player.isShiftKeyDown()) {
             return InteractionResult.PASS;
         }
@@ -206,12 +236,14 @@ public class MotorcycleEntity extends Entity {
 
     @Override
     public boolean isPickable() {
-        return !this.isRemoved();
+        return !this.isRemoved() && !this.isServiceLocked();
     }
 
     @Override
     protected boolean canAddPassenger(Entity passenger) {
-        return this.getPassengers().isEmpty() && passenger instanceof Player;
+        return !this.isServiceLocked()
+                && this.getPassengers().isEmpty()
+                && passenger instanceof Player;
     }
 
     @Override
@@ -520,11 +552,108 @@ public class MotorcycleEntity extends Entity {
         }
     }
 
+    public boolean isServiceLocked() {
+        return this.entityData.get(DATA_SERVICE_LOCKED);
+    }
+
+    public boolean isLockedToServiceStation(BlockPos stationPos) {
+        return this.isServiceLocked()
+                && this.serviceStationPos != null
+                && this.serviceStationPos.equals(stationPos);
+    }
+
+    public boolean lockToServiceStation(BlockPos stationPos, Direction facing) {
+        if (this.level().isClientSide) {
+            return false;
+        }
+
+        if (this.isServiceLocked() && !this.isLockedToServiceStation(stationPos)) {
+            return false;
+        }
+
+        this.ejectPassengers();
+
+        this.serviceStationPos = stationPos.immutable();
+        this.entityData.set(DATA_SERVICE_LOCKED, true);
+
+        this.clearInput();
+
+        this.throttle = 0.0F;
+        this.steeringInput = 0.0F;
+        this.steeringAngleOld = 0.0F;
+        this.steeringAngle = 0.0F;
+        this.yawVelocity = 0.0D;
+
+        this.entityData.set(DATA_STEERING_ANGLE, 0.0F);
+        this.setDeltaMovement(Vec3.ZERO);
+        this.moveToServicePosition(stationPos, facing);
+
+        return true;
+    }
+
+    public void unlockFromServiceStation() {
+        if (this.level().isClientSide) {
+            return;
+        }
+
+        this.serviceStationPos = null;
+        this.entityData.set(DATA_SERVICE_LOCKED, false);
+
+        this.clearInput();
+        this.setDeltaMovement(Vec3.ZERO);
+    }
+
+    private void tickServiceLock() {
+        if (this.serviceStationPos == null) {
+            this.unlockFromServiceStation();
+        }
+
+        BlockState stationState = this.level().getBlockState(this.serviceStationPos);
+
+        if (!(stationState.getBlock() instanceof ServiceStationBlock)
+                || stationState.getValue(ServiceStationBlock.PART) != ServiceStationPart.MASTER) {
+            this.unlockFromServiceStation();
+        }
+
+        Direction facing = stationState.getValue(ServiceStationBlock.FACING);
+
+        this.ejectPassengers();
+        this.clearInput();
+        this.setDeltaMovement(Vec3.ZERO);
+        this.moveToServicePosition(this.serviceStationPos, facing);
+    }
+
+    private void moveToServicePosition(BlockPos stationPos, Direction facing) {
+        double x = stationPos.getX() + 0.5D;
+        double y = stationPos.getY() + SERVICE_Y_OFFSET;
+        double z = stationPos.getZ() + 0.5D;
+
+        float yaw = facing.toYRot();
+
+        this.setPos(x, y, z);
+        this.setYRot(yaw);
+        this.setXRot(0.0F);
+
+        this.yRotO = yaw;
+        this.xRotO = 0.0F;
+    }
+
     @Override
     protected void readAdditionalSaveData(CompoundTag compound) {
+        if (compound.contains("ServiceStationPos")) {
+            this.serviceStationPos = BlockPos.of(compound.getLong("ServiceStationPos"));
+            this.entityData.set(DATA_SERVICE_LOCKED, true);
+        } else {
+            this.serviceStationPos = null;
+            this.entityData.set(DATA_SERVICE_LOCKED, false);
+        }
+
     }
 
     @Override
     protected void addAdditionalSaveData(CompoundTag compound) {
+        if (this.serviceStationPos != null) {
+            compound.putLong("ServiceStationPos", this.serviceStationPos.asLong());
+        }
     }
 }

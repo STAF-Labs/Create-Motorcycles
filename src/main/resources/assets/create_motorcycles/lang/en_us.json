@@ -15,6 +15,7 @@
   "screen.create_motorcycles.service_station.motorcycle_not_found": "Motorcycle not found",
   "screen.create_motorcycles.service_station.lock": "Lock Motorcycle",
   "screen.create_motorcycles.service_station.locked": "Locked",
+  "screen.create_motorcycles.service_station.finish_work": "Finish Work",
   "screen.create_motorcycles.service_station.status": "Status:",
   "screen.create_motorcycles.service_station.status_ready": "Ready",
   "screen.create_motorcycles.service_station.status_waiting": "Waiting",

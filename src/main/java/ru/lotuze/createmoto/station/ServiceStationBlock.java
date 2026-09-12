@@ -38,16 +38,6 @@ public class ServiceStationBlock extends Block implements EntityBlock {
                     16.0D, 3.0D, 16.0D
             );
 
-    @Nullable
-    @Override
-    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
-        if (state.getValue(PART) != ServiceStationPart.MASTER) {
-            return null;
-        }
-
-        return new ServiceStationBlockEntity(pos, state);
-    }
-
     public ServiceStationBlock() {
         super(
                 BlockBehaviour.Properties.of()
@@ -60,6 +50,16 @@ public class ServiceStationBlock extends Block implements EntityBlock {
                         .setValue(FACING, Direction.NORTH)
                         .setValue(PART, ServiceStationPart.MASTER)
         );
+    }
+
+    @Nullable
+    @Override
+    public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
+        if (state.getValue(PART) != ServiceStationPart.MASTER) {
+            return null;
+        }
+
+        return new ServiceStationBlockEntity(pos, state);
     }
 
     @Override
@@ -137,8 +137,7 @@ public class ServiceStationBlock extends Block implements EntityBlock {
                     player.displayClientMessage(
                             Component.translatable(
                                     "message.create_motorcycles.service_station.no_space"
-                            ),
-                            true
+                            ), true
                     );
                 }
             }
@@ -255,15 +254,19 @@ public class ServiceStationBlock extends Block implements EntityBlock {
             BlockState masterState,
             Player player
     ) {
-        if (!(player instanceof ServerPlayer serverPlayer)) { return; }
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
 
         BlockEntity blockEntity = level.getBlockEntity(masterPos);
 
-        if (!(blockEntity instanceof ServiceStationBlockEntity station)) { return; }
+        if (!(blockEntity instanceof ServiceStationBlockEntity station)) {
+            return;
+        }
 
         MotorcycleDetectionResult detection = station.detectMotorcycle();
 
-        ServiceStationMenuData data = ServiceStationMenuData.from(detection);
+        ServiceStationMenuData data = ServiceStationMenuData.from(detection, station.hasLockedMotorcycle());
 
         serverPlayer.openMenu(
                 new SimpleMenuProvider(
@@ -294,6 +297,8 @@ public class ServiceStationBlock extends Block implements EntityBlock {
                     buffer.writeDouble(data.x());
                     buffer.writeDouble(data.y());
                     buffer.writeDouble(data.z());
+
+                    buffer.writeBoolean(data.locked());
                 }
         );
     }

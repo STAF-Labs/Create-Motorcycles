@@ -29,9 +29,16 @@ public record MotorcycleInputPayload(boolean forward, boolean backward, boolean 
 
     public static void handle(MotorcycleInputPayload payload, IPayloadContext context) {
         context.enqueueWork(() -> {
+
             Entity vehicle = context.player().getVehicle();
+
             if (vehicle instanceof MotorcycleEntity motorcycle) {
+                if (motorcycle.isServiceLocked()) {
+                    return;
+                }
+
                 LivingEntity controllingPassenger = motorcycle.getControllingPassenger();
+
                 if (controllingPassenger == context.player()) {
                     motorcycle.setInput(payload.toInput());
                 }

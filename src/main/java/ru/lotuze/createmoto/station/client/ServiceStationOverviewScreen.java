@@ -1,5 +1,6 @@
 package ru.lotuze.createmoto.station.client;
 
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -225,11 +226,18 @@ public class ServiceStationOverviewScreen {
 
         if (menu().getStatus() == MotorcycleDetectionResult.Status.FOUND
                 && isInsideActionButton(mouseX, mouseY)) {
-            parent.setPage(ServiceStationScreen.Page.WORKBENCH);
-            return true;
+
+            Minecraft minecraft = Minecraft.getInstance();
+
+            if (minecraft.gameMode != null) {
+                minecraft.gameMode.handleInventoryButtonClick(
+                        menu().containerId,
+                        ServiceStationMenu.BUTTON_LOCK_MOTORCYCLE
+                );
+            }
         }
 
-        return false;
+        return true;
     }
 
     private boolean isInsideExitButton(double mouseX, double mouseY) {
@@ -246,12 +254,20 @@ public class ServiceStationOverviewScreen {
                 && mouseY < actionButtonY + WIDE_BUTTON_HEIGHT;
     }
 
-    private ServiceStationMenu menu() { return parent.getStationMenu(); }
+    private ServiceStationMenu menu() {
+        return parent.getStationMenu();
+    }
 
-    private Font font() { return parent.getScreenFont(); }
+    private Font font() {
+        return parent.getScreenFont();
+    }
 
-    private int width() { return parent.getScreenWidth(); }
-    private int height() { return parent.getScreenHeight(); }
+    private int width() {
+        return parent.getScreenWidth();
+    }
+    private int height() {
+        return parent.getScreenHeight();
+    }
 
     private static void blit(
             GuiGraphics graphics,

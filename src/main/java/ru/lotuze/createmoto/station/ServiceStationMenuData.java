@@ -11,11 +11,13 @@ public record ServiceStationMenuData(
         @Nullable UUID entityUuid,
         double x,
         double y,
-        double z
+        double z,
+        boolean locked
 ) {
 
     public static ServiceStationMenuData from(
-            MotorcycleDetectionResult detection
+            MotorcycleDetectionResult detection,
+            boolean locked
     ) {
         if (detection.status() != MotorcycleDetectionResult.Status.FOUND) {
 
@@ -26,7 +28,8 @@ public record ServiceStationMenuData(
                     null,
                     0.0D,
                     0.0D,
-                    0.0D
+                    0.0D,
+                    locked
             );
         }
 
@@ -45,7 +48,8 @@ public record ServiceStationMenuData(
                 motorcycle.getUUID(),
                 motorcycle.getX(),
                 motorcycle.getY(),
-                motorcycle.getZ()
+                motorcycle.getZ(),
+                locked
         );
     }
 }

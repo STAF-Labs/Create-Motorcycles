@@ -12,6 +12,9 @@ public class ServiceStationWorkbenchScreen {
     private static final ResourceLocation SMALL_BUTTON =
             ResourceLocation.fromNamespaceAndPath(CreateMotorcycles.MODID, "textures/sprites/small_button.png");
 
+    private static final ResourceLocation WIDE_BUTTON =
+            ResourceLocation.fromNamespaceAndPath(CreateMotorcycles.MODID, "textures/sprites/wide_button.png");
+
     private static final ResourceLocation EXIT_ICON =
             ResourceLocation.fromNamespaceAndPath(CreateMotorcycles.MODID, "textures/sprites/icons/exit.png");
 
@@ -33,10 +36,16 @@ public class ServiceStationWorkbenchScreen {
     private static final int SPANNER_WIDTH = 20;
     private static final int SPANNER_HEIGHT = 20;
 
+    private static final int WIDE_BUTTON_WIDTH = 144;
+    private static final int WIDE_BUTTON_HEIGHT = 20;
+
     private final ServiceStationScreen parent;
 
     private int exitButtonX;
     private int exitButtonY;
+
+    private int finishButtonX;
+    private int finishButtonY;
 
     public ServiceStationWorkbenchScreen(ServiceStationScreen parent) {
         this.parent = parent;
@@ -45,6 +54,9 @@ public class ServiceStationWorkbenchScreen {
     public void init() {
         exitButtonX = width() - EDGE_MARGIN - SMALL_BUTTON_SIZE;
         exitButtonY = EDGE_MARGIN;
+
+        finishButtonX = (width() - WIDE_BUTTON_WIDTH) / 2;
+        finishButtonY = height() - EDGE_MARGIN - WIDE_BUTTON_HEIGHT;
     }
 
     public void render(
@@ -54,7 +66,7 @@ public class ServiceStationWorkbenchScreen {
             float partialTick
     ) {
         renderHeader(graphics);
-        renderCredits(graphics);
+        renderFinishButton(graphics);
         renderStationInfo(graphics);
     }
 
@@ -76,12 +88,12 @@ public class ServiceStationWorkbenchScreen {
         blit(graphics, EXIT_ICON, exitX, exitY, EXIT_WIDTH, EXIT_HEIGHT, EXIT_TEXTURE_WIDTH, EXIT_TEXTURE_HEIGHT);
     }
 
-    private void renderCredits(GuiGraphics graphics) {
-        int x = EDGE_MARGIN;
-        int y = height() - EDGE_MARGIN - font().lineHeight * 3;
+    private void renderFinishButton(GuiGraphics graphics) {
+        blit(graphics, WIDE_BUTTON, finishButtonX, finishButtonY, WIDE_BUTTON_WIDTH, WIDE_BUTTON_HEIGHT, WIDE_BUTTON_WIDTH, WIDE_BUTTON_HEIGHT);
 
-        graphics.drawString(font(), "STAF Labs", x, y, 0xAAAAAA, true);
-        graphics.drawString(font(), "Create Motorcycles", x, y + font().lineHeight + 2, 0xAAAAAA, true);
+        Component text = Component.translatable("screen.create_motorcycles.service_station.finish_work");
+
+        graphics.drawCenteredString(font(), text, width() / 2, finishButtonY + (WIDE_BUTTON_HEIGHT - font().lineHeight) / 2 + 1, 0xFFFFFF);
     }
 
     private void renderStationInfo(GuiGraphics graphics) {
@@ -127,9 +139,24 @@ public class ServiceStationWorkbenchScreen {
             double mouseY,
             int button
     ) {
-        if (button == 0 && isInsideExitButton(mouseX, mouseY)) {
+        if (button != 0) {
+            return false;
+        }
+
+        if (isInsideExitButton(mouseX, mouseY)) {
             parent.closeScreen();
             return true;
+        }
+
+        if (isInsideFinishButton(mouseX, mouseY)) {
+            boolean handled =
+                    parent.clickMenuButton(ServiceStationMenu.BUTTON_FINISH_WORK);
+
+            if (handled) {
+                parent.setPage(ServiceStationScreen.Page.OVERVIEW);
+            }
+
+            return handled;
         }
 
         return false;
@@ -142,12 +169,30 @@ public class ServiceStationWorkbenchScreen {
                 && mouseY < exitButtonY + SMALL_BUTTON_SIZE;
     }
 
-    private ServiceStationMenu menu() { return parent.getStationMenu(); }
+    private boolean isInsideFinishButton(
+            double mouseX,
+            double mouseY
+    ) {
+        return mouseX >= finishButtonX
+                && mouseX < finishButtonX + WIDE_BUTTON_WIDTH
+                && mouseY >= finishButtonY
+                && mouseY < finishButtonY + WIDE_BUTTON_HEIGHT;
+    }
 
-    private Font font() { return parent.getScreenFont(); }
+    private ServiceStationMenu menu() {
+        return parent.getStationMenu();
+    }
 
-    private int width() { return parent.getScreenWidth(); }
-    private int height() { return parent.getScreenHeight(); }
+    private Font font() {
+        return parent.getScreenFont();
+    }
+
+    private int width() {
+        return parent.getScreenWidth();
+    }
+    private int height() {
+        return parent.getScreenHeight();
+    }
 
     private static void blit(
             GuiGraphics graphics,
