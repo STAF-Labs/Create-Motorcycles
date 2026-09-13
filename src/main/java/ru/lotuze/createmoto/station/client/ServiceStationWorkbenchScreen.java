@@ -6,6 +6,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import ru.lotuze.createmoto.CreateMotorcycles;
 import ru.lotuze.createmoto.station.ServiceStationMenu;
+import ru.lotuze.createmoto.station.client.workbench.MotorcycleViewport;
 
 public class ServiceStationWorkbenchScreen {
 
@@ -41,6 +42,8 @@ public class ServiceStationWorkbenchScreen {
 
     private final ServiceStationScreen parent;
 
+    private final MotorcycleViewport motorcycleViewport = new MotorcycleViewport();
+
     private int exitButtonX;
     private int exitButtonY;
 
@@ -65,6 +68,14 @@ public class ServiceStationWorkbenchScreen {
             int mouseY,
             float partialTick
     ) {
+        motorcycleViewport.render(
+                graphics,
+                menu().getEntityId(),
+                width(),
+                height(),
+                partialTick
+        );
+
         renderHeader(graphics);
         renderFinishButton(graphics);
         renderStationInfo(graphics);
@@ -134,32 +145,19 @@ public class ServiceStationWorkbenchScreen {
         graphics.drawString(font(), value, x + font().width(label) + 5, y, valueColor, true);
     }
 
-    public boolean mouseClicked(
-            double mouseX,
-            double mouseY,
-            int button
-    ) {
-        if (button != 0) {
-            return false;
-        }
-
-        if (isInsideExitButton(mouseX, mouseY)) {
-            parent.closeScreen();
-            return true;
-        }
-
-        if (isInsideFinishButton(mouseX, mouseY)) {
-            boolean handled =
-                    parent.clickMenuButton(ServiceStationMenu.BUTTON_FINISH_WORK);
-
-            if (handled) {
-                parent.setPage(ServiceStationScreen.Page.OVERVIEW);
+    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        if (button == 0) {
+            if (isInsideExitButton(mouseX, mouseY)) {
+                parent.closeScreen();
+                return true;
             }
 
-            return handled;
+            if (isInsideFinishButton(mouseX, mouseY)) {
+                return parent.clickMenuButton(ServiceStationMenu.BUTTON_FINISH_WORK);
+            }
         }
 
-        return false;
+        return motorcycleViewport.mouseClicked(mouseX, mouseY, button);
     }
 
     private boolean isInsideExitButton(double mouseX, double mouseY) {
@@ -205,5 +203,41 @@ public class ServiceStationWorkbenchScreen {
             int textureHeight
     ) {
         graphics.blit(texture, x, y, renderWidth, renderHeight, 0.0F, 0.0F, textureWidth, textureHeight, textureWidth, textureHeight);
+    }
+
+    public boolean mouseReleased(
+            double mouseX,
+            double mouseY,
+            int button
+    ) {
+        return motorcycleViewport.mouseReleased(
+                mouseX,
+                mouseY,
+                button
+        );
+    }
+
+    public boolean mouseDragged(
+            double mouseX,
+            double mouseY,
+            int button
+    ) {
+        return motorcycleViewport.mouseDragged(
+                mouseX,
+                mouseY,
+                button
+        );
+    }
+
+    public boolean mouseScrolled(
+            double mouseX,
+            double mouseY,
+            double scrollDelta
+    ) {
+        return motorcycleViewport.mouseScrolled(
+                mouseX,
+                mouseY,
+                scrollDelta
+        );
     }
 }

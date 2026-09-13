@@ -145,4 +145,49 @@ public class ServiceStationScreen extends AbstractContainerScreen<ServiceStation
 
         return true;
     }
+
+    @Override
+    public boolean mouseDragged(
+            double mouseX,
+            double mouseY,
+            int button,
+            double dragX,
+            double dragY
+    ) {
+        if (currentPage == Page.WORKBENCH
+                && workbenchScreen.mouseDragged(mouseX, mouseY, button)) {
+            return true;
+        }
+
+        return super.mouseDragged(mouseX, mouseY, button, dragX, dragY);
+    }
+
+    @Override
+    public boolean mouseReleased(
+            double mouseX,
+            double mouseY,
+            int button
+    ) {
+        if (currentPage == Page.WORKBENCH
+                && workbenchScreen.mouseReleased(mouseX, mouseY, button)) {
+            return true;
+        }
+
+        return super.mouseReleased(mouseX, mouseY, button);
+    }
+
+    @Override
+    public boolean mouseScrolled(
+            double mouseX,
+            double mouseY,
+            double scrollX,
+            double scrollY
+    ) {
+        if (currentPage == Page.WORKBENCH
+                && workbenchScreen.mouseScrolled(mouseX, mouseY, scrollY)) {
+            return true;
+        }
+
+        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+    }
 }
